@@ -16,12 +16,12 @@ GATHER_OUTPUTS = ('CurrentPosition', 'FollowingError',
                   'SetpointPosition', 'CurrentVelocity')
 
 
-def perform_rotation(center_offset, angle):
+def perform_rotation(center_offset, angle, theta_offset=0.0):
     old_theta = caget('13IDD:m95.RBV')
     old_x = caget('13IDD:m93.RBV')
     old_z = caget('13IDD:m94.RBV')
 
-    offset = get_xz_offset(center_offset, old_theta / 180.0 * np.pi, angle / 180.0 * np.pi)
+    offset = get_xz_offset(center_offset, (old_theta+theta_offset) / 180.0 * np.pi, angle / 180.0 * np.pi)
 
     new_theta = old_theta + angle
     new_x = old_x + offset[0]
@@ -32,16 +32,17 @@ def perform_rotation(center_offset, angle):
     caput('13IDD:m94.VAL', new_z)
 
 
-def perform_rotation_trajectory(center_offset, rotation_time, angle):
-    old_theta = caget('13IDD:m95.VAL')
+def perform_rotation_trajectory(center_offset, rotation_time, angle, theta_offset=0.0):
+    old_theta = caget('13IDD:m95.RBV')
 
-    theta = old_theta / 180. * np.pi
+    theta = (old_theta+theta_offset) / 180. * np.pi
     angle = angle / 180.0 * np.pi
 
     soller_xps = XPSTrajectory(host=HOST, group=GROUP_NAME, positioners=POSITIONERS)
 
     angle_steps = np.linspace(0, angle, 101)
     angle_steps = angle_steps[1:]
+
     stop_values = []
     for angle_step in angle_steps:
         offset = get_xz_offset(center_offset, theta, angle_step)
@@ -61,19 +62,32 @@ def perform_rotation_trajectory(center_offset, rotation_time, angle):
     del soller_xps
 
 
-def collect_data(center_offset, collection_time, angle, time_offset=5.0, back_rotation_time=10.0):
+def perform_rotation_trajectory_corrected(center_offset, rotation_time, angle, theta_offset=0.0):
+
+    #obtain current position
     old_theta = caget('13IDD:m95.RBV')
     old_x = caget('13IDD:m93.RBV')
     old_z = caget('13IDD:m94.RBV')
 
-    old_offset_to_zero = get_xz_offset(35.3, old_theta / 180 * np.pi, -old_theta / 180 * np.pi)
-    zero_x = old_x + old_offset_to_zero[0]
-    zero_z = old_z + old_offset_to_zero[1]
+    offset = get_xz_offset(center_offset, (old_theta+theta_offset) / 180.0 * np.pi, angle / 180.0 * np.pi)
 
-    target_theta = old_theta + angle
-    target_offset_to_zero = get_xz_offset(35.3, 0, target_theta / 180 * np.pi)
-    target_x = zero_x + target_offset_to_zero[0]
-    target_z = zero_z + target_offset_to_zero[1]
+    new_theta = old_theta + angle
+    new_x = old_x + offset[0]
+    new_z = old_z + offset[1]
+
+    #do a trajectory
+    perform_rotation_trajectory(center_offset, rotation_time, angle, theta_offset=0.0)
+
+    #correct for the trajectory overshoot
+    caput('13IDD:m94.VAL', new_z, wait=True)
+    caput('13IDD:m93.VAL', new_x, wait=True)
+    caput('13IDD:m95.VAL', new_theta, wait=True)
+
+
+def collect_data(center_offset, collection_time, angle, time_offset=5.0, theta_offset=0.0, back_rotation_time=10.0):
+    old_theta = caget('13IDD:m95.RBV')
+    old_x = caget('13IDD:m93.RBV')
+    old_z = caget('13IDD:m94.RBV')
 
     # create parameters for trajectory scan
     rotation_time = collection_time + time_offset
@@ -84,17 +98,12 @@ def collect_data(center_offset, collection_time, angle, time_offset=5.0, back_ro
     t.start()
 
     print 'SOLLER: rotation trajectory START'
-    perform_rotation_trajectory(center_offset, rotation_time, rotation_angle)
+    perform_rotation_trajectory(center_offset, rotation_time, rotation_angle, theta_offset=theta_offset)
     print 'SOLLER: rotation trajectory FINISHED'
 
-    print 'SOLLER: correct overshoot'
-    caput('13IDD:m94.VAL', target_z, wait=True)
-    caput('13IDD:m93.VAL', target_x, wait=True)
-    caput('13IDD:m95.VAL', target_theta, wait=True)
-
     print 'SOLLER: moving to original position'
-    # print ' --performing backwards trajectory'
-    # perform_rotation_trajectory(center_offset, back_rotation_time, -rotation_angle)
+    print ' --performing backwards trajectory'
+    perform_rotation_trajectory(center_offset, back_rotation_time, -rotation_angle)
 
     print ' --moving motors to starting position'
     caput('13IDD:m94.VAL', old_z, wait=False)
@@ -105,24 +114,27 @@ def collect_data(center_offset, collection_time, angle, time_offset=5.0, back_ro
 
 def start_detector(exposure_time):
     print "DETECTOR: data collection START"
-    caput('13MARCCD2:cam1:AcquireTime', exposure_time)
-    caput('13MARCCD2:cam1:Acquire', 1, wait=True)
+    # detector = '13MARCCD2:cam1'
+    detector = '13MAR345_2:cam1'
+    caput(detector+':AcquireTime', exposure_time)
+    caput(detector+':Acquire', 1, wait=True)
     print "DETECTOR: data collection FINISHED"
 
 
 if __name__ == '__main__':
-    # perform_rotation_trajectory(35.3, 450, 4.8)
-    # perform_rotation(35.3, -17)
-    num_of_collections = 1
-    collection_time = 30.0
-    collection_angle = 3.2
+    # perform_rotation(35.65, 20, -0.33)
 
-    for dummy_ind in range(num_of_collections):
-        collect_data(35.3, collection_time, collection_angle)
-        time.sleep(5)
+    collect_data(center_offset=35.65,
+                 collection_time=60,
+                 angle=3.19,
+                 theta_offset=-0.33)
 
-    # caput('13IDC:m30.VAL', 23)
-    #
-    # for dummy_ind in range(num_of_collections):
-    #     collect_data(35.3, collection_time, collection_angle)
-    #     time.sleep(5)
+    # perform_rotation_trajectory_corrected(center_offset=35.65,
+    #                                       rotation_time=10,
+    #                                       angle=17,
+    #                                       theta_offset=-0.33)
+
+
+    # # for dummy_ind in range(num_of_collections):
+    # #     collect_data(35.3, collection_time, collection_angle)
+    # #     time.sleep(5)
