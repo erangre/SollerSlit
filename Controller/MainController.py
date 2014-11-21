@@ -56,7 +56,7 @@ class MainController(object):
         soller_z = caget(pv_names['soller_z'] + '.RBV')
         soller_theta = caget(pv_names['soller_theta'] + '.RBV')
 
-        self.widget.update_values(soller_x, soller_z, soller_theta)
+        self.widget.update_motor_values(soller_x, soller_z, soller_theta)
 
     def soller_x_down_btn_clicked(self):
         cur_pos = caget(pv_names['soller_x'] + '.RBV')
@@ -115,11 +115,12 @@ class MainController(object):
 
     def soller_z_pos_changed(self):
         new_value = float(str(self.widget.soller_z_pos_txt.text()))
+        print new_value
         caput(pv_names['soller_z'] + '.VAL', new_value)
 
     def soller_theta_pos_changed(self):
         self.widget.enable_controls(False)
-        self.widget.status_txt.text('Rotating')
+        self.widget.status_txt.setText('Rotating')
 
         cur_value = float(caget(pv_names['soller_theta'] + '.RBV'))
         new_value = float(str(self.widget.soller_theta_pos_txt.text()))
@@ -137,7 +138,7 @@ class MainController(object):
                                               angle=step,
                                               theta_offset=theta_offset)
         self.widget.enable_controls(True)
-        self.widget.status_txt.text('')
+        self.widget.status_txt.setText('')
 
     def collect_btn_click(self):
         detector_pv = str(self.widget.detector_pv_txt.text())
