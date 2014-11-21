@@ -6,9 +6,21 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>456</width>
-    <height>247</height>
+    <width>500</width>
+    <height>250</height>
    </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>500</width>
+    <height>250</height>
+   </size>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>500</width>
+    <height>250</height>
+   </size>
   </property>
   <property name="windowTitle">
    <string>Form</string>
@@ -23,7 +35,7 @@
        </property>
        <layout class="QGridLayout" name="gridLayout">
         <item row="0" column="2">
-         <widget class="QPushButton" name="pushButton">
+         <widget class="QPushButton" name="soller_x_down_btn">
           <property name="maximumSize">
            <size>
             <width>20</width>
@@ -72,7 +84,7 @@
          </widget>
         </item>
         <item row="1" column="4">
-         <widget class="QPushButton" name="pushButton_3">
+         <widget class="QPushButton" name="soller_z_up_btn">
           <property name="maximumSize">
            <size>
             <width>20</width>
@@ -85,7 +97,7 @@
          </widget>
         </item>
         <item row="1" column="2">
-         <widget class="QPushButton" name="pushButton_4">
+         <widget class="QPushButton" name="soller_z_down_btn">
           <property name="maximumSize">
            <size>
             <width>20</width>
@@ -98,7 +110,7 @@
          </widget>
         </item>
         <item row="1" column="3">
-         <widget class="QLineEdit" name="soller">
+         <widget class="QLineEdit" name="soller_z_step_txt">
           <property name="maximumSize">
            <size>
             <width>50</width>
@@ -124,7 +136,7 @@
          </widget>
         </item>
         <item row="0" column="4">
-         <widget class="QPushButton" name="pushButton_2">
+         <widget class="QPushButton" name="soller_x_up_btn">
           <property name="maximumSize">
            <size>
             <width>20</width>
@@ -166,7 +178,7 @@
          </widget>
         </item>
         <item row="0" column="1">
-         <widget class="QLineEdit" name="lineEdit_4">
+         <widget class="QLineEdit" name="center_offset_txt">
           <property name="alignment">
            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
           </property>
@@ -183,7 +195,7 @@
          </widget>
         </item>
         <item row="1" column="1">
-         <widget class="QLineEdit" name="lineEdit_5">
+         <widget class="QLineEdit" name="theta_offset_txt">
           <property name="alignment">
            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
           </property>
@@ -200,7 +212,7 @@
          </widget>
         </item>
         <item row="2" column="1">
-         <widget class="QLineEdit" name="lineEdit_6">
+         <widget class="QLineEdit" name="soller_theta_pos_txt">
           <property name="alignment">
            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
           </property>
@@ -209,7 +221,7 @@
         <item row="3" column="1">
          <layout class="QHBoxLayout" name="horizontalLayout">
           <item>
-           <widget class="QPushButton" name="pushButton_6">
+           <widget class="QPushButton" name="soller_theta_down_btn">
             <property name="maximumSize">
              <size>
               <width>20</width>
@@ -222,7 +234,7 @@
            </widget>
           </item>
           <item>
-           <widget class="QLineEdit" name="lineEdit_7">
+           <widget class="QLineEdit" name="soller_theta_step_txt">
             <property name="text">
              <string>5</string>
             </property>
@@ -232,7 +244,7 @@
            </widget>
           </item>
           <item>
-           <widget class="QPushButton" name="pushButton_7">
+           <widget class="QPushButton" name="soller_theta_up_btn">
             <property name="maximumSize">
              <size>
               <width>20</width>
@@ -254,6 +266,19 @@
    <item>
     <layout class="QVBoxLayout" name="verticalLayout">
      <item>
+      <widget class="QLabel" name="status_txt">
+       <property name="styleSheet">
+        <string notr="true">font-size: 20px; color: red;</string>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item>
       <spacer name="verticalSpacer">
        <property name="orientation">
         <enum>Qt::Vertical</enum>
@@ -273,7 +298,11 @@
        </property>
        <layout class="QGridLayout" name="gridLayout_2">
         <item row="1" column="1">
-         <widget class="QLineEdit" name="lineEdit_2"/>
+         <widget class="QLineEdit" name="collection_time_txt">
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
         </item>
         <item row="1" column="2">
          <widget class="QLabel" name="label_5">
@@ -283,7 +312,11 @@
          </widget>
         </item>
         <item row="0" column="1">
-         <widget class="QLineEdit" name="lineEdit"/>
+         <widget class="QLineEdit" name="detector_pv_txt">
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
         </item>
         <item row="1" column="0">
          <widget class="QLabel" name="label_4">
@@ -296,7 +329,7 @@
          </widget>
         </item>
         <item row="3" column="1" colspan="2">
-         <widget class="QPushButton" name="pushButton_5">
+         <widget class="QPushButton" name="collect_btn">
           <property name="minimumSize">
            <size>
             <width>0</width>
@@ -329,7 +362,11 @@
          </widget>
         </item>
         <item row="2" column="1">
-         <widget class="QLineEdit" name="lineEdit_3"/>
+         <widget class="QLineEdit" name="collection_angle_txt">
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
         </item>
         <item row="2" column="2">
          <widget class="QLabel" name="label_7">
