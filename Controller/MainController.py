@@ -8,6 +8,8 @@ from epics import PV, caget, caput
 from PyQt4 import QtCore, QtGui
 import os
 import csv
+from threading import Thread
+import time
 
 from circular_move import perform_rotation_trajectory_corrected, collect_data
 
@@ -80,7 +82,7 @@ class MainController(object):
 
     def soller_theta_down_btn_clicked(self):
         self.widget.enable_controls(False)
-        self.widget.status_txt.text('Rotating')
+        self.widget.status_txt.setText('Rotating')
         step = float(str(self.widget.soller_theta_step_txt.text()))
         center_offset = float(str(self.widget.center_offset_txt.text()))
         theta_offset = float(str(self.widget.theta_offset_txt.text()))
@@ -91,11 +93,11 @@ class MainController(object):
                                               angle=-step,
                                               theta_offset=theta_offset)
         self.widget.enable_controls(True)
-        self.widget.status_txt.text('')
+        self.widget.status_txt.setText('')
 
     def soller_theta_up_btn_clicked(self):
         self.widget.enable_controls(False)
-        self.widget.status_txt.text('Rotating')
+        self.widget.status_txt.setText('Rotating')
 
         step = float(str(self.widget.soller_theta_step_txt.text()))
         center_offset = float(str(self.widget.center_offset_txt.text()))
@@ -107,7 +109,7 @@ class MainController(object):
                                               angle=step,
                                               theta_offset=theta_offset)
         self.widget.enable_controls(True)
-        self.widget.status_txt.text('')
+        self.widget.status_txt.setText('')
 
     def soller_x_pos_changed(self):
         new_value = float(str(self.widget.soller_x_pos_txt.text()))
@@ -130,17 +132,25 @@ class MainController(object):
         center_offset = float(str(self.widget.center_offset_txt.text()))
         theta_offset = float(str(self.widget.theta_offset_txt.text()))
 
-        QtGui.QApplication.processEvents()
-
         print cur_value, new_value, step, center_offset, theta_offset
-        perform_rotation_trajectory_corrected(center_offset=center_offset,
-                                              rotation_time=abs(step) * 2,
-                                              angle=step,
-                                              theta_offset=theta_offset)
+        perform_rotation_thread = Thread(target=perform_rotation_trajectory_corrected,
+                                         kwargs={"center_offset": center_offset,
+                                                 "rotation_time": abs(step) * 2,
+                                                 "angle": step,
+                                                 "theta_offset": theta_offset})
+
+        perform_rotation_thread.start()
+        while perform_rotation_thread.isAlive():
+            QtGui.QApplication.processEvents()
+            time.sleep(0.01)
+
         self.widget.enable_controls(True)
         self.widget.status_txt.setText('')
 
     def collect_btn_click(self):
+        self.widget.enable_controls(False)
+        self.widget.status_txt.setText('Collecting Data')
+
         detector_pv = str(self.widget.detector_pv_txt.text())
         collection_time = float(str(self.widget.collection_time_txt.text()))
         collection_angle = float(str(self.widget.collection_angle_txt.text()))
@@ -148,10 +158,22 @@ class MainController(object):
         center_offset = float(str(self.widget.center_offset_txt.text()))
         theta_offset = float(str(self.widget.theta_offset_txt.text()))
 
-        collect_data(center_offset=center_offset,
-                     collection_time=collection_time,
-                     angle=collection_angle,
-                     theta_offset=theta_offset)
+        QtGui.QApplication.processEvents()
+
+        collect_data_thread = Thread(target=collect_data,
+                                     kwargs={"center_offset": center_offset,
+                                             "collection_time": collection_time,
+                                             "angle": collection_angle,
+                                             "theta_offset": theta_offset})
+        collect_data_thread.start()
+
+        while collect_data_thread.isAlive():
+            QtGui.QApplication.processEvents()
+            time.sleep(0.01)
+
+        self.widget.enable_controls(True)
+        self.widget.status_txt.setText('')
+
 
     def raise_window(self):
         self.widget.show()
