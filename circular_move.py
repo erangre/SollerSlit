@@ -40,7 +40,7 @@ def perform_rotation_trajectory(center_offset, rotation_time, angle, theta_offse
 
     soller_xps = XPSTrajectory(host=HOST, group=GROUP_NAME, positioners=POSITIONERS)
 
-    angle_steps = np.linspace(0, angle, rotation_time * 20)
+    angle_steps = np.linspace(0, angle, rotation_time * 30)
     angle_steps = angle_steps[1:]
 
     stop_values = []
@@ -75,7 +75,7 @@ def perform_rotation_trajectory_corrected(center_offset, rotation_time, angle, t
     new_z = old_z + offset[1]
 
     #do a trajectory
-    perform_rotation_trajectory(center_offset, rotation_time, angle, theta_offset=0.0)
+    perform_rotation_trajectory(center_offset, rotation_time, angle, theta_offset=theta_offset)
 
     #correct for the trajectory overshoot
     caput('13IDD:m94.VAL', new_z, wait=True)
@@ -120,6 +120,11 @@ def start_detector(exposure_time):
     print "DETECTOR: data collection START"
     # detector = '13MARCCD2:cam1'
     detector = '13MAR345_2:cam1'
+
+    caput('13IDD:Unidig2Bo5', 0) #move in beamsteop
+    caput('13IDD:Unidig1Bo9', 1) #move out photodiod
+    time.sleep(1.5) # wait for completion
+
     caput(detector + ':AcquireTime', exposure_time)
     caput(detector + ':Acquire', 1, wait=True, timeout=99999999)
     print "DETECTOR: data collection FINISHED"
