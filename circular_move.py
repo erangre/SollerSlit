@@ -118,8 +118,8 @@ def collect_data(center_offset, collection_time, angle, time_offset=5.0, theta_o
 
 def start_detector(exposure_time):
     print "DETECTOR: data collection START"
-    # detector = '13MARCCD2:cam1'
-    detector = '13MAR345_2:cam1'
+    detector = '13MARCCD2:cam1'
+    # detector = '13MAR345_2:cam1'
 
     caput('13IDD:Unidig2Bo5', 0) #move in beamsteop
     caput('13IDD:Unidig1Bo9', 1) #move out photodiod
