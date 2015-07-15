@@ -1,25 +1,48 @@
 __author__ = 'gpd_user'
 
-from geometry import get_xz_offset, get_xz_position_rel
+from geometry import get_xz_offset
 from xps_trajectory.xps_trajectory import XPSTrajectory
 import numpy as np
-from threading import Thread, Timer
+from threading import Timer
 from epics import caput, caget
 import time
-import matplotlib.pyplot as plt
 
-HOST = '164.54.160.34'
-GROUP_NAME = 'G2'
-POSITIONERS = "SLZ SLX SLT"
+from config import xps_config, epics_config, prior_collect
 
-GATHER_OUTPUTS = ('CurrentPosition', 'FollowingError',
-                  'SetpointPosition', 'CurrentVelocity')
+HOST = xps_config['HOST']
+GROUP_NAME = xps_config['GROUP NAME']
+POSITIONERS = xps_config['POSITIONERS']
+
+GATHER_OUTPUTS = xps_config['GATHER OUTPUTS']
+
+
+def get_position():
+    """
+    Gets the current Soller Slit position
+    :return: tuple with x,z,theta as values
+    """
+    x = caget(epics_config['x']+'.RBV')
+    z = caget(epics_config['z']+'.RBV')
+    theta = caget(epics_config['theta']+'.RBV')
+    return x, z, theta
+
+
+def set_position(x, z, theta, wait=True):
+    """
+    Sets the soller slit position to x, z and y
+    :param x: new x position
+    :param z: new y position
+    :param theta: new theta position
+    :param wait: whether or not to wait for each individual movement and then only proceed with the next motor
+    """
+
+    caput(epics_config['z'], z, wait=False)
+    caput(epics_config['x'], x, wait=False)
+    caput(epics_config['theta'], theta, wait=wait)
 
 
 def perform_rotation(center_offset, angle, theta_offset=0.0):
-    old_theta = caget('13IDD:m95.RBV')
-    old_x = caget('13IDD:m93.RBV')
-    old_z = caget('13IDD:m94.RBV')
+    old_x, old_z, old_theta = get_position()
 
     offset = get_xz_offset(center_offset, (old_theta + theta_offset) / 180.0 * np.pi, angle / 180.0 * np.pi)
 
@@ -27,13 +50,21 @@ def perform_rotation(center_offset, angle, theta_offset=0.0):
     new_x = old_x + offset[0]
     new_z = old_z + offset[1]
 
-    caput('13IDD:m95.VAL', new_theta)
-    caput('13IDD:m93.VAL', new_x)
-    caput('13IDD:m94.VAL', new_z)
+    set_position(new_x, new_z, new_theta, wait=False)
 
 
 def perform_rotation_trajectory(center_offset, rotation_time, angle, theta_offset=0.0):
-    old_theta = caget('13IDD:m95.RBV')
+    """
+    Performs a rotation of the soller slit using XPS trajectory. However this does not correct for the
+    deceleration offset after the movement, therefore the end position will not be at the correct position.
+    perform_rotation_trajectory_corrected is the function which will correct for that
+    :param center_offset:
+    :param rotation_time:
+    :param angle:
+    :param theta_offset:
+    :return:
+    """
+    old_theta = caget(epics_config['theta']+'.RBV')
 
     theta = (old_theta + theta_offset) / 180. * np.pi
     angle = angle / 180.0 * np.pi
@@ -48,15 +79,11 @@ def perform_rotation_trajectory(center_offset, rotation_time, angle, theta_offse
         offset = get_xz_offset(center_offset, theta, angle_step)
         stop_values.append([offset[1], offset[0], angle_step / np.pi * 180.0])
 
-    # offset = get_xz_offset(center_offset, theta, angle)
-    # soller_xps.DefineLineTrajectoriesSoller(stop_values=(-offset[1], offset[0], angle),
-    # scan_time=rotation_time)
-
-    soller_xps.DefineLineTrajectoriesSollerMultiple(stop_values=stop_values,
+    soller_xps.define_line_trajectories_soller_multiple_motors(stop_values=stop_values,
                                                     scan_time=rotation_time)
 
     print "start trajectory scan"
-    soller_xps.RunLineTrajectorySoller()
+    soller_xps.run_line_trajectory_soller()
     print "finished trajectory scan"
     soller_xps.ftp_disconnect()
     del soller_xps
@@ -64,9 +91,7 @@ def perform_rotation_trajectory(center_offset, rotation_time, angle, theta_offse
 
 def perform_rotation_trajectory_corrected(center_offset, rotation_time, angle, theta_offset=0.0):
     # obtain current position
-    old_theta = caget('13IDD:m95.RBV')
-    old_x = caget('13IDD:m93.RBV')
-    old_z = caget('13IDD:m94.RBV')
+    old_x, old_z, old_theta = get_position()
 
     offset = get_xz_offset(center_offset, (old_theta + theta_offset) / 180.0 * np.pi, angle / 180.0 * np.pi)
 
@@ -74,23 +99,20 @@ def perform_rotation_trajectory_corrected(center_offset, rotation_time, angle, t
     new_x = old_x + offset[0]
     new_z = old_z + offset[1]
 
-    #do a trajectory
+    # do a trajectory
     perform_rotation_trajectory(center_offset, rotation_time, angle, theta_offset=theta_offset)
 
-    #correct for the trajectory overshoot
-    caput('13IDD:m94.VAL', new_z, wait=True)
-    caput('13IDD:m93.VAL', new_x, wait=True)
-    caput('13IDD:m95.VAL', new_theta, wait=True)
+    # correct for the trajectory overshoot
+    set_position(new_x, new_z, new_theta, wait=True)
 
 
 def collect_data(center_offset, collection_time, angle, time_offset=5.0, theta_offset=0.0, back_rotation_time=10.0):
-    # move beamstop down:
-    caput("13IDD:Unidig2Bo5", 0)
+    # do the prior collect movements
+    for key, val in prior_collect.iteritems():
+        caput(key, val)
 
-    #get old position
-    old_theta = caget('13IDD:m95.RBV')
-    old_x = caget('13IDD:m93.RBV')
-    old_z = caget('13IDD:m94.RBV')
+    # get old position
+    old_x, old_z, old_theta = get_position()
 
     # create parameters for trajectory scan
     rotation_time = collection_time + time_offset
@@ -110,19 +132,14 @@ def collect_data(center_offset, collection_time, angle, time_offset=5.0, theta_o
 
     time.sleep(0.5)
     print ' --moving motors to starting position'
-    caput('13IDD:m94.VAL', old_z, wait=False)
-    caput('13IDD:m93.VAL', old_x, wait=False)
-    caput('13IDD:m95.VAL', old_theta, wait=True)
+    set_position(old_x, old_z, old_theta, wait=True)
     print 'SOLLER: movement FINISHED'
 
 
 def start_detector(exposure_time):
     print "DETECTOR: data collection START"
-    detector = '13MARCCD2:cam1'
-    # detector = '13MAR345_2:cam1'
+    detector = epics_config['detector']
 
-    caput('13IDD:Unidig2Bo5', 0) #move in beamsteop
-    caput('13IDD:Unidig1Bo9', 1) #move out photodiod
     time.sleep(1.5) # wait for completion
 
     caput(detector + ':AcquireTime', exposure_time)
@@ -149,50 +166,3 @@ if __name__ == '__main__':
                  collection_time=300,
                  angle=3.205,  # 3.205
                  theta_offset=-0.33)
-
-
-    # time.sleep(110)
-    # cur_pos_m81 = caget('13IDD:m81')
-    # caput('13IDD:m81', cur_pos_m81+0.010)
-    # collect_data(center_offset=35.65,
-    #              collection_time=300,
-    #              angle=3.205,  # 3.205
-    #              theta_offset=-0.33)
-    # caput('13IDD:m81', cur_pos_m81)
-
-    #
-    # time.sleep(110)
-    # caput('13IDD:m96', -97.5)
-    # collect_data(center_offset=35.65,
-    #              collection_time=300,
-    #              angle=3.205,  # 3.205
-    #              theta_offset=-0.33)
-
-
-
-    # cur_pos_m83 = caget('13IDD:m83')
-    # caput('13IDD:m83', cur_pos_m83+0.010)
-    # collect_data(center_offset=35.65,
-    #              collection_time=300,
-    #              angle=3.205,
-    #              theta_offset=-0.33)
-    # caput('13IDD:m83', cur_pos_m83)
-    #
-    # x_values = np.linspace(-0.483, -0.423, 13)
-    # for x_val in x_values:
-    #     caput('13IDD:m81', x_val)
-    #     collect_data(center_offset=35.65,
-    #                  collection_time=300,
-    #                  angle=3.205,
-    #                  theta_offset=-0.33)
-    #     time.sleep(110)
-
-    # perform_rotation_trajectory_corrected(center_offset=35.65,
-    #                                       rotation_time=20,
-    #                                       angle=17,
-    #                                       theta_offset=-0.33)
-
-
-    # # for dummy_ind in range(num_of_collections):
-    # #     collect_data(35.3, collection_time, collection_angle)
-    # #     time.sleep(5)
