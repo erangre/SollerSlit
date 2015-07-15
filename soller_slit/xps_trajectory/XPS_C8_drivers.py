@@ -16,7 +16,7 @@
 import socket
 
 class XPSException(Exception):
-    """XPS Controller Exception"""
+    """XPS controller Exception"""
     def __init__(self, msg,*args):
         self.msg = msg
     def __str__(self):
@@ -1919,7 +1919,7 @@ class XPS:
     def APIListGet (self, socketId):
         return self.Send(socketId, 'APIListGet(char *)')
 
-    # ControllerStatusListGet :  Controller status list
+    # ControllerStatusListGet :  controller status list
     def ControllerStatusListGet (self, socketId):
         return self.Send(socketId, 'ControllerStatusListGet(char *)')
 

@@ -23,6 +23,7 @@ var/
 *.egg
 *.zip
 *.dat
+config.ini
 
 # Installer logs
 pip-log.txt

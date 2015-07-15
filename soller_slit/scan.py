@@ -1,8 +1,10 @@
 __author__ = 'Clemens Prescher'
-from circular_move import collect_data
+import time
+
 from epics import caput, caget
 import numpy as np
-import time
+
+from soller_slit.circular_move import collect_data
 
 if __name__ == '__main__':
     scan_pv = '13IDD:m96'

@@ -2,27 +2,29 @@ __author__ = 'DAC_User'
 
 __version__ = 0.1
 
-from Views.MainWidget import MainWidget
-from epics import PV, caget, caput
-
-from PyQt4 import QtCore, QtGui
 import os
 import csv
 from threading import Thread
 import time
 
-from circular_move import perform_rotation_trajectory_corrected, collect_data
+from epics import caget, caput
+
+from PyQt4 import QtCore, QtGui
+
+from soller_slit.views.SollerWidget import MainWidget
+from soller_slit.circular_move import perform_rotation_trajectory_corrected, collect_data
+from ..config import epics_config
 
 pv_names = {
-    'soller_x': '13IDD:m93',
-    'soller_z': '13IDD:m94',
-    'soller_theta': '13IDD:m95'
+    'soller_x': epics_config['x'],
+    'soller_z': epics_config['z'],
+    'soller_theta': epics_config['theta']
 }
 
 
-class MainController(object):
+class SollerController(object):
     def __init__(self):
-        self.widget = MainWidget('Soller Slit Controller - {}'.format(__version__))
+        self.widget = MainWidget('Soller Slit controller - {}'.format(__version__))
         self.create_signals()
         self.connect_pv()
         self.update_values()

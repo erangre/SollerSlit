@@ -1,12 +1,13 @@
 __author__ = 'gpd_user'
 
-from geometry import get_xz_offset
-from xps_trajectory.xps_trajectory import XPSTrajectory
-import numpy as np
 from threading import Timer
-from epics import caput, caget
 import time
 
+import numpy as np
+from epics import caput, caget
+
+from geometry import get_xz_offset
+from soller_slit.xps_trajectory.xps_trajectory import XPSTrajectory
 from config import xps_config, epics_config, prior_collect
 
 HOST = xps_config['HOST']
