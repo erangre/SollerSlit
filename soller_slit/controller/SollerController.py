@@ -15,12 +15,6 @@ from soller_slit.views.SollerWidget import MainWidget
 from soller_slit.circular_move import perform_rotation_trajectory_corrected, collect_data
 from ..config import epics_config
 
-pv_names = {
-    'soller_x': epics_config['x'],
-    'soller_z': epics_config['z'],
-    'soller_theta': epics_config['theta']
-}
-
 
 class SollerController(object):
     def __init__(self):
@@ -58,31 +52,31 @@ class SollerController(object):
         self.update_timer.start(100)
 
     def update_values(self):
-        soller_x = caget(pv_names['soller_x'] + '.RBV')
-        soller_z = caget(pv_names['soller_z'] + '.RBV')
-        soller_theta = caget(pv_names['soller_theta'] + '.RBV')
+        soller_x = caget(epics_config['x'] + '.RBV')
+        soller_z = caget(epics_config['z'] + '.RBV')
+        soller_theta = caget(epics_config['theta'] + '.RBV')
 
         self.widget.update_motor_values(soller_x, soller_z, soller_theta)
 
     def soller_x_down_btn_clicked(self):
-        cur_pos = caget(pv_names['soller_x'] + '.RBV')
+        cur_pos = caget(epics_config['x'] + '.RBV')
         step = float(str(self.widget.soller_x_step_txt.text()))
-        caput(pv_names['soller_x'] + '.VAL', cur_pos - step)
+        caput(epics_config['x'] + '.VAL', cur_pos - step)
 
     def soller_x_up_btn_clicked(self):
-        cur_pos = caget(pv_names['soller_x'] + '.RBV')
+        cur_pos = caget(epics_config['x'] + '.RBV')
         step = float(str(self.widget.soller_x_step_txt.text()))
-        caput(pv_names['soller_x'] + '.VAL', cur_pos + step)
+        caput(epics_config['x'] + '.VAL', cur_pos + step)
 
     def soller_z_down_btn_clicked(self):
-        cur_pos = caget(pv_names['soller_z'] + '.RBV')
+        cur_pos = caget(epics_config['z'] + '.RBV')
         step = float(str(self.widget.soller_z_step_txt.text()))
-        caput(pv_names['soller_z'] + '.VAL', cur_pos - step)
+        caput(epics_config['z'] + '.VAL', cur_pos - step)
 
     def soller_z_up_btn_clicked(self):
-        cur_pos = caget(pv_names['soller_z'] + '.RBV')
+        cur_pos = caget(epics_config['z'] + '.RBV')
         step = float(str(self.widget.soller_z_step_txt.text()))
-        caput(pv_names['soller_z'] + '.VAL', cur_pos + step)
+        caput(epics_config['z'] + '.VAL', cur_pos + step)
 
     def soller_theta_down_btn_clicked(self):
         self.widget.enable_controls(False)
@@ -117,12 +111,12 @@ class SollerController(object):
 
     def soller_x_pos_changed(self):
         new_value = float(str(self.widget.soller_x_pos_txt.text()))
-        caput(pv_names['soller_x'] + '.VAL', new_value)
+        caput(epics_config['x'] + '.VAL', new_value)
 
     def soller_z_pos_changed(self):
         new_value = float(str(self.widget.soller_z_pos_txt.text()))
         print new_value
-        caput(pv_names['soller_z'] + '.VAL', new_value)
+        caput(epics_config['z'] + '.VAL', new_value)
 
     def detector_pv_txt_changed(self):
         new_pv_name = str(self.widget.detector_pv_txt.text())
@@ -132,7 +126,7 @@ class SollerController(object):
         self.widget.enable_controls(False)
         self.widget.status_txt.setText('Rotating')
 
-        cur_value = float(caget(pv_names['soller_theta'] + '.RBV'))
+        cur_value = float(caget(epics_config['theta'] + '.RBV'))
         new_value = float(str(self.widget.soller_theta_pos_txt.text()))
 
         step = new_value - cur_value
