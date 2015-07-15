@@ -46,6 +46,8 @@ class SollerController(object):
         self.widget.soller_z_pos_txt.returnPressed.connect(self.soller_z_pos_changed)
         self.widget.soller_theta_pos_txt.returnPressed.connect(self.soller_theta_pos_changed)
 
+        self.widget.detector_pv_txt.returnPressed.connect(self.detector_pv_txt_changed)
+
         self.widget.collect_btn.clicked.connect(self.collect_btn_click)
 
         self.widget.closeEvent = self.close_event
@@ -122,6 +124,10 @@ class SollerController(object):
         print new_value
         caput(pv_names['soller_z'] + '.VAL', new_value)
 
+    def detector_pv_txt_changed(self):
+        new_pv_name = str(self.widget.detector_pv_txt.text())
+        epics_config['detector'] = new_pv_name
+
     def soller_theta_pos_changed(self):
         self.widget.enable_controls(False)
         self.widget.status_txt.setText('Rotating')
@@ -176,7 +182,6 @@ class SollerController(object):
         self.widget.enable_controls(True)
         self.widget.status_txt.setText('')
 
-
     def raise_window(self):
         self.widget.show()
         self.widget.setWindowState(self.widget.windowState() & QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
@@ -199,6 +204,8 @@ class SollerController(object):
         self.widget.center_offset_txt.setText(configuration['center_offset'])
         self.widget.theta_offset_txt.setText(configuration['theta_offset'])
         self.widget.detector_pv_txt.setText(configuration['detector_pv'])
+        epics_config['detector'] = configuration['detector_pv']
+
         self.widget.collection_time_txt.setText(configuration['collection_time'])
         self.widget.collection_angle_txt.setText(configuration['collection_angle'])
 
