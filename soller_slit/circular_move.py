@@ -8,7 +8,7 @@ from epics import caput, caget
 
 from geometry import get_xz_offset
 from soller_slit.xps_trajectory.xps_trajectory import XPSTrajectory
-from config import xps_config, epics_config, prior_collect
+from config import xps_config, epics_config, prior_collect, after_collect
 
 HOST = xps_config['HOST']
 GROUP_NAME = xps_config['GROUP NAME']
@@ -110,7 +110,10 @@ def perform_rotation_trajectory_corrected(center_offset, rotation_time, angle, t
 def collect_data(center_offset, collection_time, angle, time_offset=5.0, theta_offset=0.0, back_rotation_time=10.0):
     # do the prior collect movements
     for key, val in prior_collect.iteritems():
-        caput(key, val)
+        if key == "sleep":
+            time.sleep(val)
+        else:
+            caput(key, val)
 
     # get old position
     old_x, old_z, old_theta = get_position()
@@ -135,6 +138,9 @@ def collect_data(center_offset, collection_time, angle, time_offset=5.0, theta_o
     print ' --moving motors to starting position'
     set_position(old_x, old_z, old_theta, wait=True)
     print 'SOLLER: movement FINISHED'
+
+    for key, val in after_collect.iteritems():
+        caput(key, val)
 
 
 def start_detector(exposure_time):

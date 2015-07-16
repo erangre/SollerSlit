@@ -34,8 +34,12 @@ epics_config = {
 prior_collect = {
     '13IDD:Unidig2Bo5': 0,  # move in beamstop
     '13IDD:Unidig1Bo9': 1,  # move out photo diode
+    'sleep': 10,
 }
 
+after_collect = {
+    '13IDD:Unidig1Bo9': 0,  # move out photo diode
+}
 
 
 
