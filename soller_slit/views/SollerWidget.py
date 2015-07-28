@@ -26,6 +26,14 @@ class MainWidget(QtGui.QWidget, Ui_MainWidget):
         self.collection_time_txt.setValidator(QtGui.QDoubleValidator())
         self.collection_angle_txt.setValidator(QtGui.QDoubleValidator())
 
+        self.pv1_min_txt.setValidator(QtGui.QDoubleValidator())
+        self.pv1_max_txt.setValidator(QtGui.QDoubleValidator())
+        self.pv1_step_txt.setValidator(QtGui.QDoubleValidator())
+        self.pv2_min_txt.setValidator(QtGui.QDoubleValidator())
+        self.pv2_max_txt.setValidator(QtGui.QDoubleValidator())
+        self.pv2_step_txt.setValidator(QtGui.QDoubleValidator())
+        self.map_sleep_txt.setValidator(QtGui.QDoubleValidator())
+
     def update_motor_values(self, soller_x, soller_z, soller_theta):
         if soller_x is not None:
             if not self.soller_x_pos_txt.hasFocus():
@@ -50,5 +58,21 @@ class MainWidget(QtGui.QWidget, Ui_MainWidget):
 
         self.soller_theta_down_btn.setEnabled(bool_value)
         self.soller_theta_up_btn.setEnabled(bool_value)
+
+        self.collect_btn.setEnabled(bool_value)
+
+    def enable_map_controls(self, bool_value):
+        self.pv1_name_txt.setEnabled(bool_value)
+        self.pv1_min_txt.setEnabled(bool_value)
+        self.pv1_max_txt.setEnabled(bool_value)
+        self.pv1_step_txt.setEnabled(bool_value)
+
+        self.pv2_name_txt.setEnabled(bool_value)
+        self.pv2_min_txt.setEnabled(bool_value)
+        self.pv2_max_txt.setEnabled(bool_value)
+        self.pv2_step_txt.setEnabled(bool_value)
+
+        self.pv2_cb.setEnabled(bool_value)
+        self.map_sleep_txt.setEnabled(bool_value)
 
         self.collect_btn.setEnabled(bool_value)

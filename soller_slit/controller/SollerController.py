@@ -1,5 +1,4 @@
-__author__ = 'DAC_User'
-
+__author__ = 'Clemens Prescher'
 __version__ = 0.1
 
 import os
@@ -10,6 +9,7 @@ import time
 from epics import caget, caput
 
 from PyQt4 import QtCore, QtGui
+import numpy as np
 
 from soller_slit.views.SollerWidget import MainWidget
 from soller_slit.circular_move import perform_rotation_trajectory_corrected, collect_data
@@ -25,6 +25,8 @@ class SollerController(object):
 
         self.load_configuration()
         self.raise_window()
+
+        self.map_aborted = False
 
     def create_signals(self):
         self.widget.soller_x_down_btn.clicked.connect(self.soller_x_down_btn_clicked)
@@ -43,6 +45,8 @@ class SollerController(object):
         self.widget.detector_pv_txt.returnPressed.connect(self.detector_pv_txt_changed)
 
         self.widget.collect_btn.clicked.connect(self.collect_btn_click)
+        self.widget.collect_map_btn.clicked.connect(self.collect_map_btn_click)
+        self.widget.pv2_cb.toggled.connect(self.pv2_cb_toggled)
 
         self.widget.closeEvent = self.close_event
 
@@ -153,7 +157,6 @@ class SollerController(object):
         self.widget.enable_controls(False)
         self.widget.status_txt.setText('Collecting Data')
 
-        detector_pv = str(self.widget.detector_pv_txt.text())
         collection_time = float(str(self.widget.collection_time_txt.text()))
         collection_angle = float(str(self.widget.collection_angle_txt.text()))
 
@@ -176,11 +179,142 @@ class SollerController(object):
         self.widget.enable_controls(True)
         self.widget.status_txt.setText('')
 
+    def prepare_map(self):
+        self.widget.enable_map_controls(False)
+        self.widget.collect_map_btn.setText('Abort')
+        self.widget.collect_map_btn.clicked.disconnect(self.collect_map_btn_click)
+        self.widget.collect_map_btn.clicked.connect(self.abort_map)
+
+    def cleanup_map(self):
+        self.widget.status_txt.setText('')
+        self.widget.enable_map_controls(True)
+        self.widget.collect_map_btn.clicked.disconnect(self.abort_map)
+        self.widget.collect_map_btn.clicked.connect(self.collect_map_btn_click)
+        self.map_aborted = False
+        self.widget.collect_map_btn.setEnabled(True)
+        self.widget.collect_map_btn.setText('Collect Map')
+
+    def abort_map(self):
+        self.map_aborted = True
+        self.widget.collect_map_btn.setText("Aborting")
+        self.widget.collect_map_btn.setEnabled(False)
+
+    def pv_names_valid(self):
+
+        def pv_is_valid(pv_name):
+            if pv_name == '':
+                return False
+            pv_value = caget(pv1)
+            if pv_value is None:
+                return False
+            return True
+
+        pv1 = str(self.widget.pv1_name_txt.text())
+        if not pv_is_valid(pv1):
+            return False
+
+        if bool(self.widget.pv2_cb.isChecked()):
+            pv2 = str(self.widget.pv2_name_txt.text())
+            if not pv_is_valid(pv2):
+                return False
+        return True
+
+    def collect_map_btn_click(self):
+        self.prepare_map()
+        QtGui.QApplication.processEvents()
+
+        if not self.pv_names_valid():
+            self.show_error_message_box("Invalid PV names!")
+            self.cleanup_map()
+            return
+
+        sleep = float(str(self.widget.map_sleep_txt.text()))
+        pv1 = str(self.widget.pv1_name_txt.text())
+        pv1_pos = caget(pv1)
+        pv1_min = float(str(self.widget.pv1_min_txt.text()))
+        pv1_max = float(str(self.widget.pv1_max_txt.text()))
+        pv1_step = float(str(self.widget.pv1_step_txt.text()))
+
+        if pv1_step == 0:
+            self.show_error_message_box("Invalid step size. \nPlease use a step size different from 0.")
+            self.cleanup_map()
+            return
+
+        pv1_values = pv1_pos + np.arange(pv1_min, pv1_max+pv1_step, pv1_step)
+        self.widget.pv1_num_lbl.setText('{}'.format(len(pv1_values)))
+
+        if not bool(self.widget.pv2_cb.isChecked()):
+            for ind, value in enumerate(pv1_values):
+                if self.map_aborted:
+                    break
+                self.widget.pv1_cur_lbl.setText('{}'.format(ind+1))
+                caput(pv1, value)
+                self.collect_btn_click()
+                for s in np.arange(sleep, step=0.1):
+                    self.widget.status_txt.setText('Sleeping {:.1f} s'.format(sleep-s))
+                    QtGui.QApplication.processEvents()
+                    if self.map_aborted:
+                        break
+                    time.sleep(0.1)
+            caput(pv1, pv1_pos)
+        else:
+            pv2 = str(self.widget.pv2_name_txt.text())
+            pv2_pos = caget(pv2)
+            pv2_min = float(str(self.widget.pv2_min_txt.text()))
+            pv2_max = float(str(self.widget.pv2_max_txt.text()))
+            pv2_step = float(str(self.widget.pv2_step_txt.text()))
+
+            if pv2_step == 0:
+                self.show_error_message_box("Invalid step size. \nPlease use a step different from 0.")
+                self.cleanup_map()
+                return
+
+            pv2_values = pv2_pos + np.arange(pv2_min, pv2_max+pv2_step, pv2_step)
+            self.widget.pv2_num_lbl.setText('{}'.format(len(pv2_values)))
+
+            for pv1_ind, pv1_value in enumerate(pv1_values):
+                for pv2_ind, pv2_value in enumerate(pv2_values):
+                    if self.map_aborted:
+                        break
+                    self.widget.pv1_cur_lbl.setText('{}'.format(pv1_ind+1))
+                    self.widget.pv2_cur_lbl.setText('{}'.format(pv2_ind+1))
+                    caput(pv1, pv1_value)
+                    caput(pv2, pv2_value)
+                    self.collect_btn_click()
+
+                    for s in np.arange(sleep, step=0.1):
+                        self.widget.status_txt.setText('Sleeping {:.1f} s'.format(sleep-s))
+                        QtGui.QApplication.processEvents()
+                        QtGui.QApplication.processEvents()
+                        if self.map_aborted:
+                            break
+                        time.sleep(0.11)
+            caput(pv1, pv1_pos)
+            caput(pv2, pv2_pos)
+
+        self.cleanup_map()
+
+    def pv2_cb_toggled(self, value):
+        self.widget.pv2_name_txt.setEnabled(value)
+        self.widget.pv2_min_txt.setEnabled(value)
+        self.widget.pv2_max_txt.setEnabled(value)
+        self.widget.pv2_step_txt.setEnabled(value)
+
     def raise_window(self):
         self.widget.show()
         self.widget.setWindowState(self.widget.windowState() & QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
         self.widget.activateWindow()
         self.widget.raise_()
+
+    def show_error_message_box(self, msg):
+        msg_box = QtGui.QMessageBox(self.widget)
+        msg_box.setWindowFlags(QtCore.Qt.Tool)
+        msg_box.setText(msg)
+        msg_box.setIcon(QtGui.QMessageBox.Critical)
+        msg_box.setWindowTitle('Error')
+        msg_box.setStandardButtons(QtGui.QMessageBox.Ok)
+        msg_box.setDefaultButton(QtGui.QMessageBox.Ok)
+        msg_box.exec_()
 
     def load_configuration(self):
         if os.path.exists('config.ini'):

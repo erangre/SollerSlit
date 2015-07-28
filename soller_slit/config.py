@@ -32,9 +32,9 @@ epics_config = {
 # to e.g. move beamstop in or photodiode out prior to every measurement
 
 prior_collect = {
-    '13IDD:Unidig2Bo5': 0,  # move in beamstop
-    '13IDD:Unidig1Bo9': 1,  # move out photo diode
-    'sleep': 10,
+    # '13IDD:Unidig2Bo5': 0,  # move in beamstop
+    # '13IDD:Unidig1Bo9': 1,  # move out photo diode
+    'sleep': 0,
 }
 
 after_collect = {
