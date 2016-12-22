@@ -8,10 +8,10 @@ import time
 
 from epics import caget, caput
 
-from PyQt4 import QtCore, QtGui
+from qtpy import QtCore, QtGui, QtWidgets
 import numpy as np
 
-from soller_slit.views.SollerWidget import MainWidget
+from soller_slit.widgets.SollerWidget import MainWidget
 from soller_slit.circular_move import perform_rotation_trajectory_corrected, collect_data
 from ..config import epics_config
 
@@ -89,7 +89,7 @@ class SollerController(object):
         center_offset = float(str(self.widget.center_offset_txt.text()))
         theta_offset = float(str(self.widget.theta_offset_txt.text()))
 
-        QtGui.QApplication.processEvents()
+        QtWidgets.QApplication.processEvents()
         perform_rotation_trajectory_corrected(center_offset=center_offset,
                                               rotation_time=step * 2,
                                               angle=-step,
@@ -105,7 +105,7 @@ class SollerController(object):
         center_offset = float(str(self.widget.center_offset_txt.text()))
         theta_offset = float(str(self.widget.theta_offset_txt.text()))
 
-        QtGui.QApplication.processEvents()
+        QtWidgets.QApplication.processEvents()
         perform_rotation_trajectory_corrected(center_offset=center_offset,
                                               rotation_time=step * 2,
                                               angle=step,
@@ -119,7 +119,7 @@ class SollerController(object):
 
     def soller_z_pos_changed(self):
         new_value = float(str(self.widget.soller_z_pos_txt.text()))
-        print new_value
+        print(new_value)
         caput(epics_config['z'] + '.VAL', new_value)
 
     def detector_pv_txt_changed(self):
@@ -138,7 +138,7 @@ class SollerController(object):
         center_offset = float(str(self.widget.center_offset_txt.text()))
         theta_offset = float(str(self.widget.theta_offset_txt.text()))
 
-        print cur_value, new_value, step, center_offset, theta_offset
+        print(cur_value, new_value, step, center_offset, theta_offset)
         perform_rotation_thread = Thread(target=perform_rotation_trajectory_corrected,
                                          kwargs={"center_offset": center_offset,
                                                  "rotation_time": abs(step) * 2,
@@ -147,7 +147,7 @@ class SollerController(object):
 
         perform_rotation_thread.start()
         while perform_rotation_thread.isAlive():
-            QtGui.QApplication.processEvents()
+            QtWidgets.QApplication.processEvents()
             time.sleep(0.01)
 
         self.widget.enable_controls(True)
@@ -159,21 +159,23 @@ class SollerController(object):
 
         collection_time = float(str(self.widget.collection_time_txt.text()))
         collection_angle = float(str(self.widget.collection_angle_txt.text()))
+        start_angle = float(str(self.widget.start_angle_txt.text()))
 
         center_offset = float(str(self.widget.center_offset_txt.text()))
         theta_offset = float(str(self.widget.theta_offset_txt.text()))
 
-        QtGui.QApplication.processEvents()
+        QtWidgets.QApplication.processEvents()
 
         collect_data_thread = Thread(target=collect_data,
                                      kwargs={"center_offset": center_offset,
                                              "collection_time": collection_time,
                                              "angle": collection_angle,
-                                             "theta_offset": theta_offset})
+                                             "theta_offset": theta_offset,
+                                             "start_angle": start_angle})
         collect_data_thread.start()
 
         while collect_data_thread.isAlive():
-            QtGui.QApplication.processEvents()
+            QtWidgets.QApplication.processEvents()
             time.sleep(0.01)
 
         self.widget.enable_controls(True)
@@ -221,7 +223,7 @@ class SollerController(object):
 
     def collect_map_btn_click(self):
         self.prepare_map()
-        QtGui.QApplication.processEvents()
+        QtWidgets.QApplication.processEvents()
 
         if not self.pv_names_valid():
             self.show_error_message_box("Invalid PV names!")
@@ -247,12 +249,13 @@ class SollerController(object):
             for ind, value in enumerate(pv1_values):
                 if self.map_aborted:
                     break
-                self.widget.pv1_cur_lbl.setText('{}'.format(ind+1))
-                caput(pv1, value)
+                self.widget.pv1_cur_lbl.setText('{}/'.format(ind+1))
+                caput(pv1, value, wait=True)
+                time.sleep(0.15)
                 self.collect_btn_click()
                 for s in np.arange(sleep, step=0.1):
                     self.widget.status_txt.setText('Sleeping {:.1f} s'.format(sleep-s))
-                    QtGui.QApplication.processEvents()
+                    QtWidgets.QApplication.processEvents()
                     if self.map_aborted:
                         break
                     time.sleep(0.1)
@@ -276,16 +279,17 @@ class SollerController(object):
                 for pv2_ind, pv2_value in enumerate(pv2_values):
                     if self.map_aborted:
                         break
-                    self.widget.pv1_cur_lbl.setText('{}'.format(pv1_ind+1))
-                    self.widget.pv2_cur_lbl.setText('{}'.format(pv2_ind+1))
-                    caput(pv1, pv1_value)
-                    caput(pv2, pv2_value)
+                    self.widget.pv1_cur_lbl.setText('{}/'.format(pv1_ind+1))
+                    self.widget.pv2_cur_lbl.setText('{}/'.format(pv2_ind+1))
+                    caput(pv1, pv1_value, wait=True)
+                    caput(pv2, pv2_value, wait=True)
+                    time.sleep(0.15)
                     self.collect_btn_click()
 
                     for s in np.arange(sleep, step=0.1):
                         self.widget.status_txt.setText('Sleeping {:.1f} s'.format(sleep-s))
-                        QtGui.QApplication.processEvents()
-                        QtGui.QApplication.processEvents()
+                        QtWidgets.QApplication.processEvents()
+                        QtWidgets.QApplication.processEvents()
                         if self.map_aborted:
                             break
                         time.sleep(0.11)
@@ -307,13 +311,13 @@ class SollerController(object):
         self.widget.raise_()
 
     def show_error_message_box(self, msg):
-        msg_box = QtGui.QMessageBox(self.widget)
+        msg_box = QtWidgets.QMessageBox(self.widget)
         msg_box.setWindowFlags(QtCore.Qt.Tool)
         msg_box.setText(msg)
-        msg_box.setIcon(QtGui.QMessageBox.Critical)
+        msg_box.setIcon(QtWidgets.QMessageBox.Critical)
         msg_box.setWindowTitle('Error')
-        msg_box.setStandardButtons(QtGui.QMessageBox.Ok)
-        msg_box.setDefaultButton(QtGui.QMessageBox.Ok)
+        msg_box.setStandardButtons(QtWidgets.QMessageBox.Ok)
+        msg_box.setDefaultButton(QtWidgets.QMessageBox.Ok)
         msg_box.exec_()
 
     def load_configuration(self):
@@ -327,6 +331,7 @@ class SollerController(object):
                 'detector_pv': '13MAR345_2:cam1',
                 'collection_time': '60',
                 'collection_angle': '3.199',
+                'start_angle': '-22.238'
             }
 
         self.widget.center_offset_txt.setText(configuration['center_offset'])
@@ -336,6 +341,7 @@ class SollerController(object):
 
         self.widget.collection_time_txt.setText(configuration['collection_time'])
         self.widget.collection_angle_txt.setText(configuration['collection_angle'])
+        self.widget.start_angle_txt.setText(configuration['start_angle'])
 
     def save_configuration(self):
         writer = csv.writer(open('config.ini', 'w'))
@@ -344,13 +350,14 @@ class SollerController(object):
             'theta_offset': str(self.widget.theta_offset_txt.text()),
             'detector_pv': str(self.widget.detector_pv_txt.text()),
             'collection_time': str(self.widget.collection_time_txt.text()),
-            'collection_angle': str(self.widget.collection_angle_txt.text())
+            'collection_angle': str(self.widget.collection_angle_txt.text()),
+            'start_angle': str(self.widget.start_angle_txt.text())
         }
         for key, value in list(configuration.items()):
             writer.writerow([key, value])
 
     def close_event(self, _):
         self.save_configuration()
-        QtGui.QApplication.closeAllWindows()
-        QtGui.QApplication.quit()
+        QtWidgets.QApplication.closeAllWindows()
+        QtWidgets.QApplication.quit()
 

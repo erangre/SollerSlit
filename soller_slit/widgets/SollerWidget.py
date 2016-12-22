@@ -1,10 +1,10 @@
 __author__ = 'DAC_User'
 from UiFiles.MainUI import Ui_MainWidget
 
-from PyQt4 import QtGui, QtCore
+from qtpy import QtGui, QtCore, QtWidgets
 
 
-class MainWidget(QtGui.QWidget, Ui_MainWidget):
+class MainWidget(QtWidgets.QWidget, Ui_MainWidget):
     def __init__(self, title=''):
         super(MainWidget, self).__init__(None)
         self.setupUi(self)

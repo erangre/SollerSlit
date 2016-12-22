@@ -1,8 +1,12 @@
 import time
 import numpy as np
 import ftplib
-from cStringIO import StringIO
-from XPS_C8_drivers import XPS
+try:
+    from cStringIO import StringIO
+except ImportError:
+    from io import StringIO, BytesIO
+
+from .XPS_C8_drivers import XPS
 
 from config import xps_config
 
@@ -71,7 +75,7 @@ class XPSTrajectory(object):
     def upload_trajectory_file(self, fname, data):
         self.ftp_connect()
         self.ftpconn.cwd(xps_config['TRAJ_FOLDER'])
-        self.ftpconn.storbinary('STOR %s' % fname, StringIO(data))
+        self.ftpconn.storbinary('STOR %s' % fname, BytesIO(str.encode(data)))
         self.ftp_disconnect()
 
     def define_line_trajectories_soller(self, name='default',
@@ -112,7 +116,7 @@ class XPSTrajectory(object):
 
         try:
             self.upload_trajectory_file(name + '.trj', self.zxt_template % trajectory)
-            print 'uploaded'
+            print('uploaded')
         except:
             pass
         return trajectory
@@ -186,7 +190,7 @@ class XPSTrajectory(object):
         try:
             self.upload_trajectory_file(name + '.trj', trajectory_str)
             ret = True
-            print 'uploaded'
+            print('uploaded')
         except:
             pass
         return trajectory_str
@@ -196,7 +200,7 @@ class XPSTrajectory(object):
         """run trajectory in PVT mode"""
         traj = self.trajectories.get(name, None)
         if traj is None:
-            print 'Cannot find trajectory named %s' % name
+            print('Cannot find trajectory named %s' % name)
             return
 
         traj_file = '%s.trj' % name
@@ -209,7 +213,7 @@ class XPSTrajectory(object):
 
         self.xps.GroupMoveRelative(self.ssid, 'G2', ramps)
 
-        # print 'RUN TRAJ ', axis, ramps, traj_file
+        # print('RUN TRAJ ', axis, ramps, traj_file)
 
         pos_names = ['SLX', 'SLZ', 'SLT']
 
@@ -273,14 +277,14 @@ class XPSTrajectory(object):
             counter += 1
             time.sleep(1.50)
             ret, npulses, nx = self.xps.GatheringCurrentNumberGet(self.ssid)
-            print 'Had to do repeat XPS Gathering: ', ret, npulses, nx
+            print('Had to do repeat XPS Gathering: ', ret, npulses, nx)
 
         # db.add(' Will Save %i pulses , ret=%i ' % (npulses, ret))
         ret, buff = self.xps.GatheringDataMultipleLinesGet(self.ssid, 0, npulses)
         # db.add('MLGet ret=%i, buff_len = %i ' % (ret, len(buff)))
 
         if ret < 0:  # gathering too long: need to read in chunks
-            print 'Need to read Data in Chunks!!!'  # how many chunks are needed??
+            print('Need to read Data in Chunks!!!')  # how many chunks are needed??
             Nchunks = 3
             nx = int((npulses - 2) / Nchunks)
             ret = 1
@@ -292,9 +296,9 @@ class XPSTrajectory(object):
                 Nchunks = Nchunks + 2
                 nx = int((npulses - 2) / Nchunks)
                 if Nchunks > 10:
-                    print 'looks like something is wrong with the XPS!'
+                    print('looks like something is wrong with the XPS!')
                     break
-            print  ' -- will use %i Chunks for %i Pulses ' % (Nchunks, npulses)
+            print(' -- will use %i Chunks for %i Pulses ' % (Nchunks, npulses))
             # db.add(' Will use %i chunks ' % (Nchunks))
             buff = [xbuff]
             for i in range(1, Nchunks):
@@ -317,7 +321,7 @@ class XPSTrajectory(object):
         f.close()
         nlines = len(obuff.split('\n')) - 1
         if verbose:
-            print 'Wrote %i lines, %i bytes to %s' % (nlines, len(buff), fname)
+            print('Wrote %i lines, %i bytes to %s' % (nlines, len(buff), fname))
         self.nlines_out = nlines
         # db.show()
         return npulses

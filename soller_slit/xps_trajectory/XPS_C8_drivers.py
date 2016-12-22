@@ -46,7 +46,7 @@ class XPS:
                 if XPS.__usedSockets[sid] == 0:
                     raise XPSException('invalid socket at function %s' % fcn.__name__)
             except IndexError:
-                raise XPSException('no socket specified for fucntion %s' % fcn.__name__)
+                raise XPSException('no socket specified for function %s' % fcn.__name__)
             return fcn(*args, **kw)
         wrapper.__doc__ = fcn.__doc__
         wrapper.__name__ = fcn.__name__
@@ -57,14 +57,16 @@ class XPS:
     @withValidSocket
     def __sendAndReceive (self, socketId, command):
         try:
+            if type(command) is str:
+                command = str.encode(command)
             XPS.__sockets[socketId].send(command)
-            ret = XPS.__sockets[socketId].recv(1024)
+            ret = XPS.__sockets[socketId].recv(1024).decode()
             while (ret.find(',EndOfAPI') == -1):
-                ret += XPS.__sockets[socketId].recv(1024)
+                ret += XPS.__sockets[socketId].recv(1024).decode()
         except socket.timeout:
             return [-2, '']
         except socket.error (errNb, errString):
-            print 'Socket error : ' + errString
+            print('Socket error : ' + errString)
             return [-2, '']
 
         for i in range(len(ret)):

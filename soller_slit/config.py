@@ -25,20 +25,22 @@ epics_config = {
     'theta':    '13IDD:m95',
     'x':        '13IDD:m93',
     'z':        '13IDD:m94',
-    'detector': '13MARCCD2:cam1'
+    'detector': '13MAR345_2:cam1'
 }
 
 # prior_collect is a dictionary where you can set specific PV's to certain values prior to measurement. This can be used
 # to e.g. move beamstop in or photodiode out prior to every measurement
 
 prior_collect = {
-    # '13IDD:Unidig2Bo5': 0,  # move in beamstop
-    # '13IDD:Unidig1Bo9': 1,  # move out photo diode
+    '13IDD:Unidig2Bo5': 0,  # move in beamstop
+    '13IDD:Unidig1Bo9': 1,  # move out photo diode
+    # "13IDA:mono_pid1.FBON": 0, #turn feedback off
     'sleep': 0,
 }
 
 after_collect = {
-    '13IDD:Unidig1Bo9': 0,  # move out photo diode
+    # "13IDA:mono_pid1.FBON": 1, # turn feedback on
+    # '13IDD:Unidig1Bo9': 0,  # move out photo diode
 }
 
 

@@ -4,10 +4,10 @@ import sys
 
 from qtpy import QtGui, QtWidgets
 
-from soller_slit.controller.SollerController import SollerController
+from controller.SollerScanController import SollerScanController
 
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
-    controller = SollerController()
+    controller = SollerScanController()
     app.exec_()
     del app

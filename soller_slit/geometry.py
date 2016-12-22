@@ -20,6 +20,3 @@ def get_xz_position_abs(center_offset, theta, zero_pos):
     pos_offset = get_xz_offset(center_offset, 0, theta)
     new_pos = np.array(zero_pos) + np.array(pos_offset)
     return new_pos
-
-
-

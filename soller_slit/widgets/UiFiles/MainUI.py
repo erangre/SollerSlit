@@ -2,8 +2,7 @@
 
 # Form implementation generated from reading ui file 'Main.ui'
 #
-# Created: Thu Jul 16 17:40:36 2015
-#      by: PyQt4 UI code generator 4.10.4
+# Created by: PyQt4 UI code generator 4.11.4
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -157,7 +156,7 @@ class Ui_MainWidget(object):
         self.collect_btn = QtGui.QPushButton(self.groupBox_2)
         self.collect_btn.setMinimumSize(QtCore.QSize(0, 50))
         self.collect_btn.setObjectName(_fromUtf8("collect_btn"))
-        self.gridLayout_2.addWidget(self.collect_btn, 3, 1, 1, 2)
+        self.gridLayout_2.addWidget(self.collect_btn, 4, 1, 1, 2)
         self.label_3 = QtGui.QLabel(self.groupBox_2)
         self.label_3.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
         self.label_3.setObjectName(_fromUtf8("label_3"))
@@ -173,6 +172,14 @@ class Ui_MainWidget(object):
         self.label_7 = QtGui.QLabel(self.groupBox_2)
         self.label_7.setObjectName(_fromUtf8("label_7"))
         self.gridLayout_2.addWidget(self.label_7, 2, 2, 1, 1)
+        self.start_angle_txt = QtGui.QLineEdit(self.groupBox_2)
+        self.start_angle_txt.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
+        self.start_angle_txt.setObjectName(_fromUtf8("start_angle_txt"))
+        self.gridLayout_2.addWidget(self.start_angle_txt, 3, 1, 1, 1)
+        self.label_12 = QtGui.QLabel(self.groupBox_2)
+        self.label_12.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
+        self.label_12.setObjectName(_fromUtf8("label_12"))
+        self.gridLayout_2.addWidget(self.label_12, 3, 0, 1, 1)
         self.verticalLayout.addWidget(self.groupBox_2)
         self.gridLayout_5.addLayout(self.verticalLayout, 0, 1, 1, 1)
         self.groupBox_4 = QtGui.QGroupBox(MainWidget)
@@ -352,6 +359,7 @@ class Ui_MainWidget(object):
         self.label_3.setText(_translate("MainWidget", "Detector PV:", None))
         self.label_6.setText(_translate("MainWidget", "Angle:", None))
         self.label_7.setText(_translate("MainWidget", "°", None))
+        self.label_12.setText(_translate("MainWidget", "Start Angle:", None))
         self.groupBox_4.setTitle(_translate("MainWidget", "Mapping", None))
         self.pv2_min_txt.setText(_translate("MainWidget", "-0.01", None))
         self.pv1_min_txt.setText(_translate("MainWidget", "-0.01", None))
