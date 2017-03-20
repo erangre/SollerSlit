@@ -79,6 +79,12 @@ def perform_rotation_trajectory(center_offset, rotation_time, angle, theta_offse
     """
     old_theta = caget(epics_config['theta'] + '.RBV')
 
+    while old_theta is None:  # sometimes it gets None and the program breaks...
+        time.sleep(0.1)
+        old_theta = caget(epics_config['theta'] + '.RBV')
+
+    print(old_theta)
+    print(theta_offset)
     theta = (old_theta + theta_offset) / 180. * np.pi
     angle = angle / 180.0 * np.pi
 
@@ -119,10 +125,10 @@ def perform_rotation_trajectory_corrected(center_offset, rotation_time, angle, t
     set_position(new_x, new_z, new_theta, wait=True)
 
 
-def collect_data(center_offset, collection_time, angle, time_offset=5.0, theta_offset=0.0, back_rotation_time=10.0,
+def collect_data(center_offset, collection_time, angle, time_offset=10.0, theta_offset=0.0, back_rotation_time=10.0,
                  start_angle=-22.238):
     # do the prior collect movements
-    for key, val in prior_collect.iteritems():
+    for key, val in prior_collect.items():
         if key == "sleep":
             time.sleep(val)
         else:
@@ -141,7 +147,7 @@ def collect_data(center_offset, collection_time, angle, time_offset=5.0, theta_o
     rotation_angle = float(rotation_time) / float(collection_time) * angle
 
     # create the timer for data_collection
-    t = Timer(time_offset / 2.0, start_detector, args=(collection_time,))
+    t = Timer(4, start_detector, args=(collection_time,))
     t.start()
 
     print('SOLLER: rotation trajectory START')
@@ -157,8 +163,56 @@ def collect_data(center_offset, collection_time, angle, time_offset=5.0, theta_o
     set_position(old_x, old_z, old_theta, wait=True)
     print('SOLLER: movement FINISHED')
 
-    for key, val in after_collect.iteritems():
+    for key, val in after_collect.items():
         caput(key, val)
+
+
+def collect_data_ping_pong(center_offset, collection_time, angle, theta_offset=0.0, start_angle=-22.238,
+                           update_function=None):
+    detector = epics_config['detector']
+    # do the prior collect movements
+    for key, val in prior_collect.items():
+        if key == "sleep":
+            time.sleep(val)
+        else:
+            caput(key, val)
+
+    # get old position
+    old_x, old_z, old_theta = get_position()
+
+    # move to start angle
+    if not np.isclose(old_theta, start_angle):
+        print('Moving to correct start angle: {}'.format(start_angle))
+        move_to_theta(start_angle, center_offset, theta_offset, wait=True)
+
+    old_shutter_mode = caget(detector + ':ShutterMode')
+    caput(detector + ':ShutterMode', 0, wait=True)
+
+    n = collection_time // 30
+
+    print('SOLLER: rotation trajectory START')
+    for i in range(int(n)):
+        if update_function is not None:
+            update_function("Collect ping " + str(i + 1) + '/' + str(int(n)))
+        print("ping " + str(i + 1) + ' of ' + str(int(n)))
+        perform_rotation_trajectory(center_offset, 15, angle, theta_offset=theta_offset)
+        if update_function is not None:
+            update_function("Collect pong " + str(i + 1) + '/' + str(int(n)))
+        print("pong " + str(i + 1) + ' of ' + str(int(n)))
+        perform_rotation_trajectory(center_offset, 15, -angle, theta_offset=theta_offset)
+    print('SOLLER: rotation trajectory FINISHED')
+
+    print(' --moving motors to starting position')
+    set_position(old_x, old_z, old_theta, wait=True)
+    print('SOLLER: movement FINISHED')
+
+    update_function('Reading Detector')
+    start_detector(1)
+
+    for key, val in after_collect.items():
+        caput(key, val)
+
+    caput(detector + ':ShutterMode', old_shutter_mode)
 
 
 def start_detector(exposure_time):
@@ -168,6 +222,7 @@ def start_detector(exposure_time):
     time.sleep(1.5)  # wait for completion
 
     caput(detector + ':AcquireTime', exposure_time)
+    print("DETECTOR: START Aquiring")
     caput(detector + ':Acquire', 1, wait=True, timeout=99999999)
     print("DETECTOR: data collection FINISHED")
 

@@ -231,9 +231,10 @@ class XPSTrajectory(object):
         self.xps.GatheringConfigurationSet(self.ssid, self.gather_outputs)
 
         ret = self.xps.MultipleAxesPVTPulseOutputSet(self.ssid, self.group_name,
-                                                     2, 2 + step_number, dtime)
+                                                     2, 1 + step_number, dtime)
         ret = self.xps.MultipleAxesPVTVerification(self.ssid, self.group_name, traj_file)
 
+        print(self.group_name)
         buffer = ('Always', 'G2.PVT.TrajectoryPulse')
         o = self.xps.EventExtendedConfigurationTriggerSet(self.ssid, buffer,
                                                           ('0', '0'), ('0', '0'),

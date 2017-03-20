@@ -12,8 +12,8 @@ from qtpy import QtCore, QtGui, QtWidgets
 import numpy as np
 
 from soller_slit.widgets.SollerWidget import MainWidget
-from soller_slit.circular_move import perform_rotation_trajectory_corrected, collect_data
-from ..config import epics_config
+from soller_slit.circular_move import perform_rotation_trajectory_corrected, collect_data, collect_data_ping_pong
+from ..config import epics_config, beamline_controls
 
 
 class SollerController(object):
@@ -45,6 +45,7 @@ class SollerController(object):
         self.widget.detector_pv_txt.returnPressed.connect(self.detector_pv_txt_changed)
 
         self.widget.collect_btn.clicked.connect(self.collect_btn_click)
+        self.widget.collect_ping_pong_btn.clicked.connect(self.collect_ping_pong_btn_click)
         self.widget.collect_map_btn.clicked.connect(self.collect_map_btn_click)
         self.widget.pv2_cb.toggled.connect(self.pv2_cb_toggled)
 
@@ -154,6 +155,13 @@ class SollerController(object):
         self.widget.status_txt.setText('')
 
     def collect_btn_click(self):
+
+        if beamline_controls['detector_cover'] and caget(beamline_controls['detector_cover']):
+            self.widget.status_txt.setText('MOVING OUT COVER')
+            QtWidgets.QApplication.processEvents()
+            caput(beamline_controls['detector_cover'], 0)
+            time.sleep(30)
+
         self.widget.enable_controls(False)
         self.widget.status_txt.setText('Collecting Data')
 
@@ -174,11 +182,56 @@ class SollerController(object):
                                              "start_angle": start_angle})
         collect_data_thread.start()
 
+        comments = str(collection_time) + ' s' + ', from: ' + str(start_angle) + ', by: ' + str(collection_angle)
+        detector = epics_config['detector'].rsplit(':', 1)[0]
+        caput(detector + ':AcquireSequence.STRA', comments)
         while collect_data_thread.isAlive():
             QtWidgets.QApplication.processEvents()
             time.sleep(0.01)
 
         self.widget.enable_controls(True)
+        self.widget.status_txt.setText('')
+
+    def collect_ping_pong_btn_click(self):
+        self.widget.enable_controls(False)
+        self.widget.enable_map_controls(False)
+
+        if beamline_controls['detector_cover'] and caget(beamline_controls['detector_cover']):
+            self.widget.status_txt.setText('MOVING OUT COVER')
+            QtWidgets.QApplication.processEvents()
+            caput(beamline_controls['detector_cover'], 0)
+            time.sleep(30)
+
+        self.widget.status_txt.setText('Collecting Data')
+
+        collection_time = float(str(self.widget.collection_time_txt.text()))
+        collection_angle = float(str(self.widget.collection_angle_txt.text()))
+        start_angle = float(str(self.widget.start_angle_txt.text()))
+
+        center_offset = float(str(self.widget.center_offset_txt.text()))
+        theta_offset = float(str(self.widget.theta_offset_txt.text()))
+
+        QtWidgets.QApplication.processEvents()
+
+        collect_data_thread = Thread(target=collect_data_ping_pong,
+                                     kwargs={"center_offset": center_offset,
+                                             "collection_time": collection_time,
+                                             "angle": collection_angle,
+                                             "theta_offset": theta_offset,
+                                             "start_angle": start_angle,
+                                             "update_function": self.widget.status_txt.setText})
+
+        collect_data_thread.start()
+
+        comments = str(collection_time) + ' s' + ', from: ' + str(start_angle) + ', by: ' + str(collection_angle)
+        detector = epics_config['detector'].rsplit(':', 1)[0]
+        caput(detector + ':AcquireSequence.STRA', comments)
+        while collect_data_thread.isAlive():
+            QtWidgets.QApplication.processEvents()
+            time.sleep(0.01)
+
+        self.widget.enable_controls(True)
+        self.widget.enable_map_controls(True)
         self.widget.status_txt.setText('')
 
     def prepare_map(self):
@@ -242,19 +295,20 @@ class SollerController(object):
             self.cleanup_map()
             return
 
-        pv1_values = pv1_pos + np.arange(pv1_min, pv1_max+pv1_step, pv1_step)
+        pv1_values = pv1_pos + np.arange(pv1_min, pv1_max + pv1_step, pv1_step)
         self.widget.pv1_num_lbl.setText('{}'.format(len(pv1_values)))
 
         if not bool(self.widget.pv2_cb.isChecked()):
             for ind, value in enumerate(pv1_values):
                 if self.map_aborted:
                     break
-                self.widget.pv1_cur_lbl.setText('{}/'.format(ind+1))
+                self.widget.pv1_cur_lbl.setText('{}/'.format(ind + 1))
                 caput(pv1, value, wait=True)
                 time.sleep(0.15)
-                self.collect_btn_click()
+                # self.collect__btn_click()
+                self.collect_ping_pong_btn_click()
                 for s in np.arange(sleep, step=0.1):
-                    self.widget.status_txt.setText('Sleeping {:.1f} s'.format(sleep-s))
+                    self.widget.status_txt.setText('Sleeping {:.1f} s'.format(sleep - s))
                     QtWidgets.QApplication.processEvents()
                     if self.map_aborted:
                         break
@@ -272,22 +326,23 @@ class SollerController(object):
                 self.cleanup_map()
                 return
 
-            pv2_values = pv2_pos + np.arange(pv2_min, pv2_max+pv2_step, pv2_step)
+            pv2_values = pv2_pos + np.arange(pv2_min, pv2_max + pv2_step, pv2_step)
             self.widget.pv2_num_lbl.setText('{}'.format(len(pv2_values)))
 
             for pv1_ind, pv1_value in enumerate(pv1_values):
                 for pv2_ind, pv2_value in enumerate(pv2_values):
                     if self.map_aborted:
                         break
-                    self.widget.pv1_cur_lbl.setText('{}/'.format(pv1_ind+1))
-                    self.widget.pv2_cur_lbl.setText('{}/'.format(pv2_ind+1))
+                    self.widget.pv1_cur_lbl.setText('{}/'.format(pv1_ind + 1))
+                    self.widget.pv2_cur_lbl.setText('{}/'.format(pv2_ind + 1))
                     caput(pv1, pv1_value, wait=True)
                     caput(pv2, pv2_value, wait=True)
                     time.sleep(0.15)
-                    self.collect_btn_click()
+                    # self.collect_btn_click()
+                    self.collect_ping_pong_btn_click()
 
                     for s in np.arange(sleep, step=0.1):
-                        self.widget.status_txt.setText('Sleeping {:.1f} s'.format(sleep-s))
+                        self.widget.status_txt.setText('Sleeping {:.1f} s'.format(sleep - s))
                         QtWidgets.QApplication.processEvents()
                         QtWidgets.QApplication.processEvents()
                         if self.map_aborted:
@@ -344,7 +399,7 @@ class SollerController(object):
         self.widget.start_angle_txt.setText(configuration['start_angle'])
 
     def save_configuration(self):
-        writer = csv.writer(open('config.ini', 'w'))
+        writer = csv.writer(open('config.ini', 'w', newline=''))
         configuration = {
             'center_offset': str(self.widget.center_offset_txt.text()),
             'theta_offset': str(self.widget.theta_offset_txt.text()),
@@ -360,4 +415,3 @@ class SollerController(object):
         self.save_configuration()
         QtWidgets.QApplication.closeAllWindows()
         QtWidgets.QApplication.quit()
-

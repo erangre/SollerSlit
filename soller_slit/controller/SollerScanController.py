@@ -4,7 +4,7 @@ from epics.devices import Scaler
 from qtpy import QtGui, QtWidgets
 import numpy as np
 import time
-from config import epics_config
+from config import epics_config, beamline_controls
 from fitting import fit_gaussian
 from circular_move import move_to_theta
 
@@ -36,8 +36,8 @@ class SollerScanController(object):
 
     def scan(self):
         theta_pv = epics_config['theta']
-        center_offset = 35.75
-        theta_offset = -1.2
+        center_offset = 6.65
+        theta_offset = -18.8
 
         motor_pos = float(caget(theta_pv + '.RBV'))
         soller_x_pos = float(caget(epics_config['x']+'.RBV'))
@@ -52,7 +52,7 @@ class SollerScanController(object):
         pos = []
         data = []
 
-        caput('13IDD:Unidig1Bo11', 0)
+        caput(beamline_controls['table_shutter'], 0)
 
         for position in scan_position:
             cur_position = float(caget(theta_pv + '.RBV'))
@@ -66,7 +66,7 @@ class SollerScanController(object):
             self.widget.plot_widget.plot_data(pos, data)
             QtWidgets.QApplication.processEvents()
 
-        caput('13IDD:Unidig1Bo11', 1)
+        caput(beamline_controls['table_shutter'], 1)
         move_to_theta(motor_pos, center_offset, theta_offset, wait=True)
 
         caput(epics_config['x'], soller_x_pos)
@@ -87,7 +87,7 @@ class SollerScanController(object):
     def grid_scan(self):
 
         self._abort_grid_scan = False
-        cur_pos = float(caget('13IDD:m93.RBV'))
+        cur_pos = float(caget(epics_config['x'] + '.RBV'))
 
         scan_range = float(str(self.widget.grid_range_txt.text()))
         scan_step = float(str(self.widget.grid_step_txt.text()))
@@ -97,19 +97,19 @@ class SollerScanController(object):
         pos = []
         data = []
         for position in scan_position:
-            if self._abort_grid_scan is False:
+            if self._abort_grid_scan is True:
                 break
-            caput('13IDD:m93', position, wait=True)
+            caput(epics_config['x'], position, wait=True)
             pos.append(position)
             data.append(self.scan())
 
             self.widget.grid_plot_widget.plot_data(pos, data)
             QtWidgets.QApplication.processEvents()
 
-        caput('13IDD:m93', cur_pos, wait=True)
+        caput(epics_config['x'], cur_pos, wait=True)
 
     def abort_grid_scan(self):
-        self._abort_grid_scan = False
+        self._abort_grid_scan = True
 
     def wait(self, wait_time, update_time=0.02):
         passed_time = 0

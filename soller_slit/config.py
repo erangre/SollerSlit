@@ -28,6 +28,13 @@ epics_config = {
     'detector': '13MAR345_2:cam1'
 }
 
+beamline_controls = {
+    'table_shutter': '13IDD:Unidig1Bo11',
+    'photo_diode': '13IDD:Unidig1Bo9',
+    'beamstop_control': '13IDD:Unidig2Bo5',
+    'detector_cover': '13IDD:Unidig2Bo12',
+}
+
 # prior_collect is a dictionary where you can set specific PV's to certain values prior to measurement. This can be used
 # to e.g. move beamstop in or photodiode out prior to every measurement
 
@@ -42,6 +49,3 @@ after_collect = {
     # "13IDA:mono_pid1.FBON": 1, # turn feedback on
     # '13IDD:Unidig1Bo9': 0,  # move out photo diode
 }
-
-
-

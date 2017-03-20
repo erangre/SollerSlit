@@ -1,5 +1,5 @@
 __author__ = 'DAC_User'
-from UiFiles.MainUI import Ui_MainWidget
+from .UiFiles.MainUI import Ui_MainWidget
 
 from qtpy import QtGui, QtCore, QtWidgets
 
@@ -10,6 +10,8 @@ class MainWidget(QtWidgets.QWidget, Ui_MainWidget):
         self.setupUi(self)
         self.set_validator()
         self.setWindowTitle(title)
+
+        self.collect_btn.setEnabled(False)
 
     def set_validator(self):
         self.theta_offset_txt.setValidator(QtGui.QDoubleValidator())
@@ -59,7 +61,9 @@ class MainWidget(QtWidgets.QWidget, Ui_MainWidget):
         self.soller_theta_down_btn.setEnabled(bool_value)
         self.soller_theta_up_btn.setEnabled(bool_value)
 
-        self.collect_btn.setEnabled(bool_value)
+        # self.collect_btn.setEnabled(bool_value)
+        self.collect_ping_pong_btn.setEnabled(bool_value)
+        self.collect_map_btn.setEnabled(bool_value)
 
     def enable_map_controls(self, bool_value):
         self.pv1_name_txt.setEnabled(bool_value)
@@ -75,4 +79,4 @@ class MainWidget(QtWidgets.QWidget, Ui_MainWidget):
         self.pv2_cb.setEnabled(bool_value)
         self.map_sleep_txt.setEnabled(bool_value)
 
-        self.collect_btn.setEnabled(bool_value)
+        #self.collect_btn.setEnabled(bool_value)
