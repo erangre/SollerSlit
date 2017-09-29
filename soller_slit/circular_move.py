@@ -6,7 +6,7 @@ import numpy as np
 from epics import caput, caget
 from geometry import get_xz_offset
 from xps_trajectory.xps_trajectory import XPSTrajectory
-from config import xps_config, epics_config, prior_collect, after_collect
+from config import xps_config, epics_config, prior_collect, after_collect, values
 
 HOST = xps_config['HOST']
 GROUP_NAME = xps_config['GROUP NAME']
@@ -171,6 +171,9 @@ def collect_data_ping_pong(center_offset, collection_time, angle, theta_offset=0
                            update_function=None):
     detector = epics_config['detector']
     # do the prior collect movements
+
+    ping_time = values['time_per_ping']
+
     for key, val in prior_collect.items():
         if key == "sleep":
             time.sleep(val)
@@ -188,18 +191,18 @@ def collect_data_ping_pong(center_offset, collection_time, angle, theta_offset=0
     old_shutter_mode = caget(detector + ':ShutterMode')
     caput(detector + ':ShutterMode', 0, wait=True)
 
-    n = collection_time // 30
+    n = collection_time // (2*ping_time)
 
     print('SOLLER: rotation trajectory START')
     for i in range(int(n)):
         if update_function is not None:
             update_function("Collect ping " + str(i + 1) + '/' + str(int(n)))
         print("ping " + str(i + 1) + ' of ' + str(int(n)))
-        perform_rotation_trajectory(center_offset, 15, angle, theta_offset=theta_offset)
+        perform_rotation_trajectory(center_offset, ping_time, angle, theta_offset=theta_offset)
         if update_function is not None:
             update_function("Collect pong " + str(i + 1) + '/' + str(int(n)))
         print("pong " + str(i + 1) + ' of ' + str(int(n)))
-        perform_rotation_trajectory(center_offset, 15, -angle, theta_offset=theta_offset)
+        perform_rotation_trajectory(center_offset, ping_time, -angle, theta_offset=theta_offset)
     print('SOLLER: rotation trajectory FINISHED')
 
     print(' --moving motors to starting position')

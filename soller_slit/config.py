@@ -49,3 +49,7 @@ after_collect = {
     # "13IDA:mono_pid1.FBON": 1, # turn feedback on
     # '13IDD:Unidig1Bo9': 0,  # move out photo diode
 }
+
+values = {
+    'time_per_ping': 15,
+}

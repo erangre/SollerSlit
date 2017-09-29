@@ -13,7 +13,7 @@ import numpy as np
 
 from soller_slit.widgets.SollerWidget import MainWidget
 from soller_slit.circular_move import perform_rotation_trajectory_corrected, collect_data, collect_data_ping_pong
-from ..config import epics_config, beamline_controls
+from ..config import epics_config, beamline_controls, values
 
 
 class SollerController(object):
@@ -204,12 +204,13 @@ class SollerController(object):
             caput(pv, self.old_settings[pv], wait=True)
 
     def prepare_beamline_for_ping_pong(self, collection_time):
+        ping_time = values['time_per_ping']
         self.save_beamline_settings()
         caput(beamline_controls['table_shutter'], 0, wait=True)
-        n = collection_time // 30
+        n = collection_time // (2*ping_time)
         caput(epics_config['detector'] + ':TriggerMode', 3, wait=True)
         caput(epics_config['detector'] + ':NumImages', n*2, wait=True)
-        caput(epics_config['detector'] + 'AcquireTime', 15.0, wait=True)
+        caput(epics_config['detector'] + 'AcquireTime', ping_time, wait=True)
 
     def collect_ping_pong_btn_click(self):
         self.widget.enable_controls(False)
