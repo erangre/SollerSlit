@@ -27,6 +27,7 @@ class SollerController(object):
         self.raise_window()
 
         self.map_aborted = False
+        self.old_settings = {}
 
     def create_signals(self):
         self.widget.soller_x_down_btn.clicked.connect(self.soller_x_down_btn_clicked)
@@ -192,6 +193,24 @@ class SollerController(object):
         self.widget.enable_controls(True)
         self.widget.status_txt.setText('')
 
+    def save_beamline_settings(self):
+        self.old_settings[epics_config['detector'] + ':TriggerMode'] = caget(epics_config['detector'] + ':TriggerMode')
+        self.old_settings[epics_config['detector'] + ':NumImages'] = caget(epics_config['detector'] + ':NumImages')
+        self.old_settings[epics_config['detector'] + ':AcquireTime'] = caget(epics_config['detector'] + ':AcquireTime')
+        self.old_settings[beamline_controls['table_shutter']] = caget(beamline_controls['table_shutter'])
+
+    def restore_beamline_settings(self):
+        for pv in self.old_settings:
+            caput(pv, self.old_settings[pv], wait=True)
+
+    def prepare_beamline_for_ping_pong(self, collection_time):
+        self.save_beamline_settings()
+        caput(beamline_controls['table_shutter'], 0, wait=True)
+        n = collection_time // 30
+        caput(epics_config['detector'] + ':TriggerMode', 3, wait=True)
+        caput(epics_config['detector'] + ':NumImages', n*2, wait=True)
+        caput(epics_config['detector'] + 'AcquireTime', 15.0, wait=True)
+
     def collect_ping_pong_btn_click(self):
         self.widget.enable_controls(False)
         self.widget.enable_map_controls(False)
@@ -207,6 +226,8 @@ class SollerController(object):
         collection_time = float(str(self.widget.collection_time_txt.text()))
         collection_angle = float(str(self.widget.collection_angle_txt.text()))
         start_angle = float(str(self.widget.start_angle_txt.text()))
+
+        self.prepare_beamline_for_ping_pong(collection_time)
 
         center_offset = float(str(self.widget.center_offset_txt.text()))
         theta_offset = float(str(self.widget.theta_offset_txt.text()))
@@ -229,6 +250,8 @@ class SollerController(object):
         while collect_data_thread.isAlive():
             QtWidgets.QApplication.processEvents()
             time.sleep(0.01)
+
+        self.restore_beamline_settings()
 
         self.widget.enable_controls(True)
         self.widget.enable_map_controls(True)
@@ -381,8 +404,10 @@ class SollerController(object):
             configuration = dict(x for x in reader)
         else:
             configuration = {
-                'center_offset': '35.65',
-                'theta_offset': '-0.33',
+                # 'center_offset': '35.65',
+                # 'theta_offset': '-0.33',
+                'center_offset': '35.35',
+                'theta_offset': '-15.4',
                 'detector_pv': epics_config['detector'],
                 'collection_time': '60',
                 'collection_angle': '3.199',

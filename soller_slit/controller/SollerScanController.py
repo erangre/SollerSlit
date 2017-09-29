@@ -36,8 +36,10 @@ class SollerScanController(object):
 
     def scan(self):
         theta_pv = epics_config['theta']
-        center_offset = 6.65
-        theta_offset = -18.8
+        # center_offset = 6.65
+        # theta_offset = -18.8
+        center_offset = 35.35
+        theta_offset = -15.4
 
         motor_pos = float(caget(theta_pv + '.RBV'))
         soller_x_pos = float(caget(epics_config['x']+'.RBV'))
