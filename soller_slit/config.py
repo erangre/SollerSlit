@@ -25,14 +25,14 @@ epics_config = {
     'theta':    '13IDD:m95',
     'x':        '13IDD:m93',
     'z':        '13IDD:m94',
-    'detector': '13MAR345_2:cam1'
+    'detector': '13PIL3:cam1'
 }
 
 beamline_controls = {
     'table_shutter': '13IDD:Unidig1Bo11',
     'photo_diode': '13IDD:Unidig1Bo9',
     'beamstop_control': '13IDD:Unidig2Bo5',
-    'detector_cover': '13IDD:Unidig2Bo12',
+    'detector_cover': None,
 }
 
 # prior_collect is a dictionary where you can set specific PV's to certain values prior to measurement. This can be used
