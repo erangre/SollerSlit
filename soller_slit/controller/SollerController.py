@@ -198,6 +198,16 @@ class SollerController(object):
         self.old_settings[epics_config['detector'] + ':NumImages'] = caget(epics_config['detector'] + ':NumImages')
         self.old_settings[epics_config['detector'] + ':AcquireTime'] = caget(epics_config['detector'] + ':AcquireTime')
         self.old_settings[beamline_controls['table_shutter']] = caget(beamline_controls['table_shutter'])
+        self.old_settings[epics_config['pil_proc'] + ':EnableCallbacks'] = caget(
+            epics_config['pil_proc'] + ':EnableCallbacks')
+        self.old_settings[epics_config['pil_proc'] + ':ArrayCallbacks'] = caget(
+            epics_config['pil_proc'] + ':ArrayCallbacks')
+        self.old_settings[epics_config['pil_proc'] + ':EnableFilter'] = caget(
+            epics_config['pil_proc'] + ':EnableFilter')
+        self.old_settings[epics_config['pil_proc'] + ':NumFilter'] = caget(
+            epics_config['pil_proc'] + ':NumFilter')
+        self.old_settings[epics_config['pil_proc'] + ':FilterType'] = caget(
+            epics_config['pil_proc'] + ':FilterType')
 
     def restore_beamline_settings(self):
         for pv in self.old_settings:
@@ -211,6 +221,12 @@ class SollerController(object):
         caput(epics_config['detector'] + ':TriggerMode', 3, wait=True)
         caput(epics_config['detector'] + ':NumImages', n*2, wait=True)
         caput(epics_config['detector'] + 'AcquireTime', ping_time, wait=True)
+        caput(epics_config['pil_proc'] + ':EnableCallbacks', 1, wait=True)
+        caput(epics_config['pil_proc'] + ':ArrayCallbacks', 1, wait=True)
+        caput(epics_config['pil_proc'] + ':EnableFilter', 1, wait=True)
+        caput(epics_config['pil_proc'] + ':NumFilter', n*2, wait=True)
+        caput(epics_config['pil_proc'] + ':ResetFilter', 1, wait=True)
+        caput(epics_config['pil_proc'] + ':FilterType', 2, wait=True)
 
     def collect_ping_pong_btn_click(self):
         self.widget.enable_controls(False)

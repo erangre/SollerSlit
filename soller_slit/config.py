@@ -25,7 +25,8 @@ epics_config = {
     'theta':    '13IDD:m95',
     'x':        '13IDD:m93',
     'z':        '13IDD:m94',
-    'detector': '13PIL3:cam1'
+    'detector': '13PIL3:cam1',
+    'pil_proc': '13PIL3:Proc1',
 }
 
 beamline_controls = {
