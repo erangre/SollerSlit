@@ -383,7 +383,7 @@ class SollerController(object):
             configuration = {
                 'center_offset': '35.65',
                 'theta_offset': '-0.33',
-                'detector_pv': '13MAR345_2:cam1',
+                'detector_pv': epics_config['detector'],
                 'collection_time': '60',
                 'collection_angle': '3.199',
                 'start_angle': '-22.238'
