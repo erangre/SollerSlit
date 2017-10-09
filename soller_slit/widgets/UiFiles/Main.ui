@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>541</width>
-    <height>377</height>
+    <height>413</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -265,6 +265,13 @@
    </item>
    <item row="0" column="1">
     <layout class="QVBoxLayout" name="verticalLayout">
+     <item>
+      <widget class="QCheckBox" name="wait_for_injection_cb">
+       <property name="text">
+        <string>Wait for injection?</string>
+       </property>
+      </widget>
+     </item>
      <item>
       <widget class="QLabel" name="status_txt">
        <property name="styleSheet">

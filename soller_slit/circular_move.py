@@ -132,7 +132,10 @@ def collect_data(center_offset, collection_time, angle, time_offset=10.0, theta_
         if key == "sleep":
             time.sleep(val)
         else:
-            caput(key, val)
+            if key == '13IDD:Unidig2Bo5' and caget(epics_config['ds_mirror_position']) > -110.0:
+                continue
+            else:
+                caput(key, val)
 
     # get old position
     old_x, old_z, old_theta = get_position()
@@ -168,7 +171,7 @@ def collect_data(center_offset, collection_time, angle, time_offset=10.0, theta_
 
 
 def collect_data_ping_pong(center_offset, collection_time, angle, theta_offset=0.0, start_angle=-22.238,
-                           update_function=None):
+                           update_function=None, parent=None, wait_for_injection=True):
     detector = epics_config['detector']
     # do the prior collect movements
 
@@ -178,7 +181,10 @@ def collect_data_ping_pong(center_offset, collection_time, angle, theta_offset=0
         if key == "sleep":
             time.sleep(val)
         else:
-            caput(key, val)
+            if key == '13IDD:Unidig2Bo5' and caget(epics_config['ds_mirror_position']) > -110.0:
+                continue
+            else:
+                caput(key, val)
 
     # get old position
     old_x, old_z, old_theta = get_position()
@@ -195,10 +201,21 @@ def collect_data_ping_pong(center_offset, collection_time, angle, theta_offset=0
 
     print('SOLLER: rotation trajectory START')
     for i in range(int(n)):
+        if parent.abort_btn_pressed:
+            set_position(old_x, old_z, old_theta, wait=True)
+            print('SOLLER: movement ABORTED. returning to origin')
+            if update_function is not None:
+                update_function("Aborted before " + str(i + 1) + '/' + str(int(n)))
+            return
+        if wait_for_injection:
+            check_for_injection_and_wait(update_function, ping_time)
         if update_function is not None:
             update_function("Collect ping " + str(i + 1) + '/' + str(int(n)))
         print("ping " + str(i + 1) + ' of ' + str(int(n)))
         perform_rotation_trajectory(center_offset, ping_time, angle, theta_offset=theta_offset)
+
+        if wait_for_injection:
+            check_for_injection_and_wait(update_function, ping_time)
         if update_function is not None:
             update_function("Collect pong " + str(i + 1) + '/' + str(int(n)))
         print("pong " + str(i + 1) + ' of ' + str(int(n)))
@@ -209,13 +226,21 @@ def collect_data_ping_pong(center_offset, collection_time, angle, theta_offset=0
     set_position(old_x, old_z, old_theta, wait=True)
     print('SOLLER: movement FINISHED')
 
-    update_function('Reading Detector')
-    start_detector(1)
+    # update_function('Reading Detector')
+    # start_detector(1)
 
     for key, val in after_collect.items():
         caput(key, val)
 
     caput(detector + ':ShutterMode', old_shutter_mode)
+
+
+def check_for_injection_and_wait(update_function, ping_time):
+    time_to_next_injection = caget("Mt:TopUpTime2Inject.VAL")
+    if time_to_next_injection < ping_time+1:
+        if update_function is not None:
+            update_function("Waiting for injection")
+        time.sleep(time_to_next_injection + 3)
 
 
 def start_detector(exposure_time):

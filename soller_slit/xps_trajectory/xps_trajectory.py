@@ -146,8 +146,8 @@ class XPSTrajectory(object):
             temp_start_values = values
 
         ramp_time = np.max(abs(velocities[0] / accel_values))
+        pixel_time = scan_time*2  # (scan_time * step / abs(distances[0][0]))
         scan_time = float(abs(scan_time)) / len(stop_values)
-        pixel_time = (scan_time * step / abs(distances[0][0]))
         ramp = 0.5 * velocities[0] * ramp_time
 
         # %(ramptime)f, %(zramp)f, %(zvelo)f, %(xramp)f, %(xvelo)f, %(tramp)f, %(tvelo)f
@@ -229,7 +229,6 @@ class XPSTrajectory(object):
 
         self.xps.GatheringReset(self.ssid)
         self.xps.GatheringConfigurationSet(self.ssid, self.gather_outputs)
-
         ret = self.xps.MultipleAxesPVTPulseOutputSet(self.ssid, self.group_name,
                                                      2, 1 + step_number, dtime)
         ret = self.xps.MultipleAxesPVTVerification(self.ssid, self.group_name, traj_file)
@@ -253,7 +252,7 @@ class XPSTrajectory(object):
         if save:
             npulses = self.save_results(outfile, verbose=verbose)
 
-        self.xps.GroupMoveRelative(self.ssid, 'G2', -np.array(ramps))
+        self.xps.GroupMoveRelative(self.ssid, 'G2', np.array(ramps))
         return npulses
 
     def abort_scan(self):

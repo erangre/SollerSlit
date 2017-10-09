@@ -11,7 +11,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_MainWidget(object):
     def setupUi(self, MainWidget):
         MainWidget.setObjectName("MainWidget")
-        MainWidget.resize(541, 377)
+        MainWidget.resize(541, 413)
         MainWidget.setMinimumSize(QtCore.QSize(0, 0))
         MainWidget.setMaximumSize(QtCore.QSize(16777215, 16777215))
         self.gridLayout_5 = QtWidgets.QGridLayout(MainWidget)
@@ -112,6 +112,9 @@ class Ui_MainWidget(object):
         self.gridLayout_5.addLayout(self.verticalLayout_2, 0, 0, 1, 1)
         self.verticalLayout = QtWidgets.QVBoxLayout()
         self.verticalLayout.setObjectName("verticalLayout")
+        self.wait_for_injection_cb = QtWidgets.QCheckBox(MainWidget)
+        self.wait_for_injection_cb.setObjectName("wait_for_injection_cb")
+        self.verticalLayout.addWidget(self.wait_for_injection_cb)
         self.status_txt = QtWidgets.QLabel(MainWidget)
         self.status_txt.setStyleSheet("font-size: 20px; color: red;")
         self.status_txt.setText("")
@@ -342,6 +345,7 @@ class Ui_MainWidget(object):
         self.soller_theta_down_btn.setText(_translate("MainWidget", "<"))
         self.soller_theta_step_txt.setText(_translate("MainWidget", "5"))
         self.soller_theta_up_btn.setText(_translate("MainWidget", ">"))
+        self.wait_for_injection_cb.setText(_translate("MainWidget", "Wait for injection?"))
         self.groupBox_2.setTitle(_translate("MainWidget", "Data Collection"))
         self.label_5.setText(_translate("MainWidget", "s"))
         self.label_4.setText(_translate("MainWidget", "Collection time:"))

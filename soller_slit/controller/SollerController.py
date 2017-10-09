@@ -28,6 +28,7 @@ class SollerController(object):
 
         self.map_aborted = False
         self.old_settings = {}
+        self.abort_btn_pressed = False
 
     def create_signals(self):
         self.widget.soller_x_down_btn.clicked.connect(self.soller_x_down_btn_clicked)
@@ -45,7 +46,8 @@ class SollerController(object):
 
         self.widget.detector_pv_txt.returnPressed.connect(self.detector_pv_txt_changed)
 
-        self.widget.collect_btn.clicked.connect(self.collect_btn_click)
+        # self.widget.collect_btn.clicked.connect(self.collect_btn_click)
+        self.widget.collect_btn.clicked.connect(self.abort_collect_btn_click)
         self.widget.collect_ping_pong_btn.clicked.connect(self.collect_ping_pong_btn_click)
         self.widget.collect_map_btn.clicked.connect(self.collect_map_btn_click)
         self.widget.pv2_cb.toggled.connect(self.pv2_cb_toggled)
@@ -210,6 +212,7 @@ class SollerController(object):
             epics_config['pil_proc'] + ':FilterType')
 
     def restore_beamline_settings(self):
+        caput(beamline_controls['table_shutter'], 1, wait=True)
         for pv in self.old_settings:
             caput(pv, self.old_settings[pv], wait=True)
 
@@ -217,20 +220,23 @@ class SollerController(object):
         ping_time = values['time_per_ping']
         self.save_beamline_settings()
         caput(beamline_controls['table_shutter'], 0, wait=True)
+        time.sleep(1)
         n = collection_time // (2*ping_time)
         caput(epics_config['detector'] + ':TriggerMode', 3, wait=True)
         caput(epics_config['detector'] + ':NumImages', n*2, wait=True)
-        caput(epics_config['detector'] + 'AcquireTime', ping_time, wait=True)
+        caput(epics_config['detector'] + ':AcquireTime', ping_time, wait=True)
         caput(epics_config['pil_proc'] + ':EnableCallbacks', 1, wait=True)
         caput(epics_config['pil_proc'] + ':ArrayCallbacks', 1, wait=True)
         caput(epics_config['pil_proc'] + ':EnableFilter', 1, wait=True)
         caput(epics_config['pil_proc'] + ':NumFilter', n*2, wait=True)
         caput(epics_config['pil_proc'] + ':ResetFilter', 1, wait=True)
         caput(epics_config['pil_proc'] + ':FilterType', 2, wait=True)
+        caput(epics_config['detector'] + ':Acquire', 1, wait=False)
 
     def collect_ping_pong_btn_click(self):
         self.widget.enable_controls(False)
         self.widget.enable_map_controls(False)
+        self.widget.collect_btn.setEnabled(True)
 
         if beamline_controls['detector_cover'] and caget(beamline_controls['detector_cover']):
             self.widget.status_txt.setText('MOVING OUT COVER')
@@ -257,7 +263,10 @@ class SollerController(object):
                                              "angle": collection_angle,
                                              "theta_offset": theta_offset,
                                              "start_angle": start_angle,
-                                             "update_function": self.widget.status_txt.setText})
+                                             "update_function": self.widget.status_txt.setText,
+                                             "parent": self,
+                                             "wait_for_injection": self.widget.wait_for_injection_cb.isChecked()
+                                             })
 
         collect_data_thread.start()
 
@@ -268,6 +277,11 @@ class SollerController(object):
             QtWidgets.QApplication.processEvents()
             time.sleep(0.01)
 
+        if self.abort_btn_pressed:
+            self.abort_btn_pressed = False
+            self.map_aborted = True
+
+        time.sleep(1)
         self.restore_beamline_settings()
 
         self.widget.enable_controls(True)
@@ -353,6 +367,7 @@ class SollerController(object):
                     if self.map_aborted:
                         break
                     time.sleep(0.1)
+
             caput(pv1, pv1_pos)
         else:
             pv2 = str(self.widget.pv2_name_txt.text())
@@ -457,3 +472,6 @@ class SollerController(object):
         self.save_configuration()
         QtWidgets.QApplication.closeAllWindows()
         QtWidgets.QApplication.quit()
+
+    def abort_collect_btn_click(self):
+        self.abort_btn_pressed = True

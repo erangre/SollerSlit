@@ -11,6 +11,7 @@ class MainWidget(QtWidgets.QWidget, Ui_MainWidget):
         self.set_validator()
         self.setWindowTitle(title)
 
+        self.collect_btn.setText('Abort')
         self.collect_btn.setEnabled(False)
 
     def set_validator(self):
@@ -61,7 +62,7 @@ class MainWidget(QtWidgets.QWidget, Ui_MainWidget):
         self.soller_theta_down_btn.setEnabled(bool_value)
         self.soller_theta_up_btn.setEnabled(bool_value)
 
-        # self.collect_btn.setEnabled(bool_value)
+        self.collect_btn.setEnabled(not bool_value)
         self.collect_ping_pong_btn.setEnabled(bool_value)
         self.collect_map_btn.setEnabled(bool_value)
 

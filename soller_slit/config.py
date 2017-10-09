@@ -27,6 +27,8 @@ epics_config = {
     'z':        '13IDD:m94',
     'detector': '13PIL3:cam1',
     'pil_proc': '13PIL3:Proc1',
+    'ds_mirror_position': '13IDD:m24.RBV',
+
 }
 
 beamline_controls = {
