@@ -25,8 +25,8 @@ epics_config = {
     'theta':    '13IDD:m95',
     'x':        '13IDD:m93',
     'z':        '13IDD:m94',
-    'detector': '13PIL3:cam1',
-    'pil_proc': '13PIL3:Proc1',
+    'detector': '13PIL300K:cam1',
+    'pil_proc': '13PIL300K:Proc1',
     'ds_mirror_position': '13IDD:m24.RBV',
 
 }
@@ -42,7 +42,7 @@ beamline_controls = {
 # to e.g. move beamstop in or photodiode out prior to every measurement
 
 prior_collect = {
-    '13IDD:Unidig2Bo5': 0,  # move in beamstop
+    '13IDD:Unidig2Bo5': 1,  # move in beamstop
     '13IDD:Unidig1Bo9': 1,  # move out photo diode
     # "13IDA:mono_pid1.FBON": 0, #turn feedback off
     'sleep': 0,

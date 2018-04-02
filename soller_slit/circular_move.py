@@ -202,11 +202,11 @@ def collect_data_ping_pong(center_offset, collection_time, angle, theta_offset=0
     print('SOLLER: rotation trajectory START')
     for i in range(int(n)):
         if parent.abort_btn_pressed:
-            while caget('13PIL3:Proc1:NumFiltered_RBV') < caget('13PIL3:Proc1:NumFilter_RBV'):
-                caput('13PIL3:Proc1:ProcessPlugin', 1, wait=True)
-            # caput('13PIL3:TIFF1:ProcessPlugin', 1, wait=True)
-            # caput('13PIL3:TIFF1:WriteFile', 1, wait=True)
-            caput('13PIL3:cam1:Acquire', 0, wait=True)
+            while caget('13PIL300K:Proc1:NumFiltered_RBV') < caget('13PIL300K:Proc1:NumFilter_RBV'):
+                caput('13PIL300K:Proc1:ProcessPlugin', 1, wait=True)
+            # caput('13PIL300K:TIFF1:ProcessPlugin', 1, wait=True)
+            # caput('13PIL300K:TIFF1:WriteFile', 1, wait=True)
+            caput('13PIL300K:cam1:Acquire', 0, wait=True)
             set_position(old_x, old_z, old_theta, wait=True)
             print('SOLLER: movement ABORTED. returning to origin')
             if update_function is not None:
@@ -218,6 +218,7 @@ def collect_data_ping_pong(center_offset, collection_time, angle, theta_offset=0
             update_function("Collect ping " + str(i + 1) + '/' + str(int(n)))
         print("ping " + str(i + 1) + ' of ' + str(int(n)))
         perform_rotation_trajectory(center_offset, ping_time, angle, theta_offset=theta_offset)
+        time.sleep(0.1)
 
         if wait_for_injection:
             check_for_injection_and_wait(update_function, ping_time)
@@ -226,6 +227,7 @@ def collect_data_ping_pong(center_offset, collection_time, angle, theta_offset=0
         print("pong " + str(i + 1) + ' of ' + str(int(n)))
         perform_rotation_trajectory(center_offset, ping_time, -angle, theta_offset=theta_offset)
     print('SOLLER: rotation trajectory FINISHED')
+    time.sleep(0.1)
 
     print(' --moving motors to starting position')
     set_position(old_x, old_z, old_theta, wait=True)
