@@ -32,9 +32,9 @@ epics_config = {
 }
 
 beamline_controls = {
-    'table_shutter': '13IDD:Unidig1Bo11',
-    'photo_diode': '13IDD:Unidig1Bo9',
-    'beamstop_control': '13IDD:Unidig2Bo5',
+    'table_shutter': '13IDC:Unidig1Bo0',
+    # 'photo_diode': '13IDD:Unidig1Bo9',
+    # 'beamstop_control': '13IDD:Unidig2Bo5',
     'detector_cover': None,
 }
 
@@ -42,10 +42,10 @@ beamline_controls = {
 # to e.g. move beamstop in or photodiode out prior to every measurement
 
 prior_collect = {
-    '13IDD:Unidig2Bo5': 1,  # move in beamstop
-    '13IDD:Unidig1Bo9': 1,  # move out photo diode
+    # '13IDD:Unidig2Bo5': 1,  # move in beamstop
+    # '13IDD:Unidig1Bo9': 1,  # move out photo diode
     # "13IDA:mono_pid1.FBON": 0, #turn feedback off
-    'sleep': 0,
+    # 'sleep': 0,
 }
 
 after_collect = {
