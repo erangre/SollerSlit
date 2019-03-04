@@ -133,6 +133,7 @@ def collect_data(center_offset, collection_time, angle, time_offset=10.0, theta_
             time.sleep(val)
         else:
             if key == '13IDD:Unidig2Bo5' and caget(epics_config['ds_mirror_position']) > -110.0:
+                print("Not moving beamstop in because of DS mirror!")
                 continue
             else:
                 caput(key, val)
@@ -161,7 +162,7 @@ def collect_data(center_offset, collection_time, angle, time_offset=10.0, theta_
     print(' --performing backwards trajectory')
     perform_rotation_trajectory(center_offset, back_rotation_time, -rotation_angle)
 
-    time.sleep(0.5)
+    time.sleep(1)
     print(' --moving motors to starting position')
     set_position(old_x, old_z, old_theta, wait=True)
     print('SOLLER: movement FINISHED')
@@ -227,7 +228,7 @@ def collect_data_ping_pong(center_offset, collection_time, angle, theta_offset=0
         print("pong " + str(i + 1) + ' of ' + str(int(n)))
         perform_rotation_trajectory(center_offset, ping_time, -angle, theta_offset=theta_offset)
     print('SOLLER: rotation trajectory FINISHED')
-    time.sleep(0.1)
+    time.sleep(0.5)
 
     print(' --moving motors to starting position')
     set_position(old_x, old_z, old_theta, wait=True)

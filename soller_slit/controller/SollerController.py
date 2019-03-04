@@ -13,7 +13,7 @@ import numpy as np
 
 from soller_slit.widgets.SollerWidget import MainWidget
 from soller_slit.circular_move import perform_rotation_trajectory_corrected, collect_data, collect_data_ping_pong
-from ..config import epics_config, beamline_controls, values
+from ..config import epics_config, beamline_controls, values, prior_collect
 
 
 class SollerController(object):
@@ -87,11 +87,16 @@ class SollerController(object):
         caput(epics_config['z'] + '.VAL', cur_pos + step)
 
     def soller_theta_down_btn_clicked(self):
-        self.widget.enable_controls(False)
-        self.widget.status_txt.setText('Rotating')
         step = float(str(self.widget.soller_theta_step_txt.text()))
         center_offset = float(str(self.widget.center_offset_txt.text()))
         theta_offset = float(str(self.widget.theta_offset_txt.text()))
+
+        if float(self.widget.soller_theta_pos_txt.text()) - step > -13.4 and \
+                caget(epics_config['ds_mirror_position'], as_string=False) > -110:
+            return
+
+        self.widget.enable_controls(False)
+        self.widget.status_txt.setText('Rotating')
 
         QtWidgets.QApplication.processEvents()
         perform_rotation_trajectory_corrected(center_offset=center_offset,
@@ -102,12 +107,16 @@ class SollerController(object):
         self.widget.status_txt.setText('')
 
     def soller_theta_up_btn_clicked(self):
-        self.widget.enable_controls(False)
-        self.widget.status_txt.setText('Rotating')
-
         step = float(str(self.widget.soller_theta_step_txt.text()))
         center_offset = float(str(self.widget.center_offset_txt.text()))
         theta_offset = float(str(self.widget.theta_offset_txt.text()))
+
+        if float(self.widget.soller_theta_pos_txt.text()) + step > -13.4 and \
+                        caget(epics_config['ds_mirror_position'], as_string=False) > -110:
+            return
+
+        self.widget.enable_controls(False)
+        self.widget.status_txt.setText('Rotating')
 
         QtWidgets.QApplication.processEvents()
         perform_rotation_trajectory_corrected(center_offset=center_offset,
@@ -131,11 +140,15 @@ class SollerController(object):
         epics_config['detector'] = new_pv_name
 
     def soller_theta_pos_changed(self):
-        self.widget.enable_controls(False)
-        self.widget.status_txt.setText('Rotating')
 
         cur_value = float(caget(epics_config['theta'] + '.RBV'))
         new_value = float(str(self.widget.soller_theta_pos_txt.text()))
+
+        if new_value > -13.4 and caget(epics_config['ds_mirror_position'], as_string=False) > -110:
+            return
+
+        self.widget.enable_controls(False)
+        self.widget.status_txt.setText('Rotating')
 
         step = new_value - cur_value
 
@@ -210,6 +223,7 @@ class SollerController(object):
             epics_config['pil_proc'] + ':NumFilter')
         self.old_settings[epics_config['pil_proc'] + ':FilterType'] = caget(
             epics_config['pil_proc'] + ':FilterType')
+        self.old_settings["13PIL300K:TIFF1:NDArrayPort"] = caget("13PIL300K:TIFF1:NDArrayPort")
 
     def restore_beamline_settings(self):
         caput(beamline_controls['table_shutter'], 1, wait=True)
@@ -231,9 +245,13 @@ class SollerController(object):
         caput(epics_config['pil_proc'] + ':NumFilter', n*2, wait=True)
         caput(epics_config['pil_proc'] + ':ResetFilter', 1, wait=True)
         caput(epics_config['pil_proc'] + ':FilterType', 2, wait=True)
+        caput("13PIL300K:TIFF1:NDArrayPort", "PROC1", wait=True)
         caput(epics_config['detector'] + ':Acquire', 1, wait=False)
 
     def collect_ping_pong_btn_click(self):
+        if not caget(epics_config['ds_mirror_moving']):
+            print("please wait for DS mirror to finish moving")
+            return
         self.widget.enable_controls(False)
         self.widget.enable_map_controls(False)
         self.widget.collect_btn.setEnabled(True)
@@ -250,7 +268,22 @@ class SollerController(object):
         collection_angle = float(str(self.widget.collection_angle_txt.text()))
         start_angle = float(str(self.widget.start_angle_txt.text()))
 
+        for key, val in prior_collect.items():
+            if key == "sleep":
+                time.sleep(val)
+            else:
+                if key == '13IDD:Unidig2Bo5' and caget(epics_config['ds_mirror_position']) > -110.0:
+                    continue
+                else:
+                    caput(key, val)
+
+        time.sleep(1.0)
+
         self.prepare_beamline_for_ping_pong(collection_time)
+
+        if start_angle + collection_angle > -13.4 and caget(epics_config['ds_mirror_position'], as_string=False) > -110:
+            self.cleanup_after_ping_pong()
+            return
 
         center_offset = float(str(self.widget.center_offset_txt.text()))
         theta_offset = float(str(self.widget.theta_offset_txt.text()))
@@ -280,6 +313,10 @@ class SollerController(object):
         if self.abort_btn_pressed:
             self.abort_btn_pressed = False
             self.map_aborted = True
+
+        self.cleanup_after_ping_pong()
+
+    def cleanup_after_ping_pong(self):
 
         time.sleep(1)
         self.restore_beamline_settings()
