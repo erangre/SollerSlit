@@ -249,6 +249,10 @@ class SollerController(object):
         caput(epics_config['detector'] + ':Acquire', 1, wait=False)
 
     def collect_ping_pong_btn_click(self):
+        if not caget('13IDD:m24.DMOV'):  # make sure mirror is not moving
+            return
+        if caget('13IDD:Unidig2Bo20'):
+            caput('13IDD:Unidig2Bo20', 0)
         if not caget(epics_config['ds_mirror_moving']):
             print("please wait for DS mirror to finish moving")
             return
@@ -366,6 +370,8 @@ class SollerController(object):
         return True
 
     def collect_map_btn_click(self):
+        if not caget('13IDD:m24.DMOV'):
+            return
         self.prepare_map()
         QtWidgets.QApplication.processEvents()
 
