@@ -246,7 +246,6 @@ class SollerController(object):
         caput(epics_config['pil_proc'] + ':ResetFilter', 1, wait=True)
         caput(epics_config['pil_proc'] + ':FilterType', 2, wait=True)
         caput("13PIL300K:TIFF1:NDArrayPort", "PROC1", wait=True)
-        caput(epics_config['detector'] + ':Acquire', 1, wait=False)
 
     def collect_ping_pong_btn_click(self):
         if not caget('13IDD:m24.DMOV'):  # make sure mirror is not moving
@@ -286,8 +285,11 @@ class SollerController(object):
         self.prepare_beamline_for_ping_pong(collection_time)
 
         if start_angle + collection_angle > -13.4 and caget(epics_config['ds_mirror_position'], as_string=False) > -110:
+            print("rotating too much with DS mirror in!")
             self.cleanup_after_ping_pong()
             return
+
+        caput(epics_config['detector'] + ':Acquire', 1, wait=False)
 
         center_offset = float(str(self.widget.center_offset_txt.text()))
         theta_offset = float(str(self.widget.theta_offset_txt.text()))
