@@ -13,7 +13,7 @@ class SollerScanController(object):
     def __init__(self):
         self.widget = SollerScanWidget()
         self.connect_signals()
-        self.scaler = Scaler("13IDD:scaler1")
+        self.scaler = Scaler("13IDC:scaler1")
         self.widget.raise_window()
 
     def connect_signals(self):
@@ -38,8 +38,8 @@ class SollerScanController(object):
         theta_pv = epics_config['theta']
         # center_offset = 6.65
         # theta_offset = -18.8
-        center_offset = 35.35
-        theta_offset = -15.4
+        center_offset = 35.3
+        theta_offset = -15.35
 
         motor_pos = float(caget(theta_pv + '.RBV'))
         soller_x_pos = float(caget(epics_config['x']+'.RBV'))

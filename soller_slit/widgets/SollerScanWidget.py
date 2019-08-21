@@ -52,7 +52,7 @@ class SollerScanWidget(QtWidgets.QWidget):
         main_layout.addLayout(plot_layout)
 
     def create_control_widgets(self, main_layout):
-        self.scaler_pv_txt = QtWidgets.QLineEdit("13IDD:scaler1")
+        self.scaler_pv_txt = QtWidgets.QLineEdit("13IDC:scaler1")
         self.omega_pos_txt = NumberLineEdit("")
         self.range_txt = NumberLineEdit("0.1")
         self.step_txt = NumberLineEdit("0.005")

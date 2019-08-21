@@ -210,6 +210,7 @@ class SollerController(object):
             epics_config['pil_proc'] + ':NumFilter')
         self.old_settings[epics_config['pil_proc'] + ':FilterType'] = caget(
             epics_config['pil_proc'] + ':FilterType')
+        self.old_settings['13PIL300K:TIFF1:NDArrayPort'] = caget('13PIL300K:TIFF1:NDArrayPort')
 
     def restore_beamline_settings(self):
         caput(beamline_controls['table_shutter'], 1, wait=True)
@@ -231,6 +232,7 @@ class SollerController(object):
         caput(epics_config['pil_proc'] + ':NumFilter', n*2, wait=True)
         caput(epics_config['pil_proc'] + ':ResetFilter', 1, wait=True)
         caput(epics_config['pil_proc'] + ':FilterType', 2, wait=True)
+        caput('13PIL300K:TIFF1:NDArrayPort', 'PROC1', wait=True)
         caput(epics_config['detector'] + ':Acquire', 1, wait=False)
 
     def collect_ping_pong_btn_click(self):
@@ -438,12 +440,12 @@ class SollerController(object):
             configuration = {
                 # 'center_offset': '35.65',
                 # 'theta_offset': '-0.33',
-                'center_offset': '35.35',
-                'theta_offset': '-15.4',
+                'center_offset': '35.34',
+                'theta_offset': '-15.47',
                 'detector_pv': epics_config['detector'],
                 'collection_time': '60',
-                'collection_angle': '3.199',
-                'start_angle': '-22.238'
+                'collection_angle': '3.2',
+                'start_angle': '-13'
             }
 
         self.widget.center_offset_txt.setText(configuration['center_offset'])

@@ -20,9 +20,16 @@ def get_position():
     Gets the current Soller Slit position
     :return: tuple with x,z,theta as values
     """
-    x = caget(epics_config['x'] + '.RBV')
-    z = caget(epics_config['z'] + '.RBV')
-    theta = caget(epics_config['theta'] + '.RBV')
+    x = None
+    z = None
+    theta = None
+    while x is None:
+        x = caget(epics_config['x'] + '.RBV')
+    while z is None:
+        z = caget(epics_config['z'] + '.RBV')
+    while theta is None:
+        theta = caget(epics_config['theta'] + '.RBV')
+    print(x, z, theta)
     return x, z, theta
 
 
